@@ -1,0 +1,7 @@
+<launch>
+	
+	<node name="laser_scan_to_point_cloud_converter_node" type="laser_scan_to_point_cloud_converter_node" 
+		  pkg="pandora_slam_3d" respawn="false" output="screen" />
+	  
+</launch>
+

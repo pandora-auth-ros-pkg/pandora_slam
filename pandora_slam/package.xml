@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<package>
+  <name>pandora_slam</name>
+  <version>0.1.0</version>
+  <description>Containts slam algorithm implementations.</description>
+
+  <maintainer email="etsardou@gmail.com">Manos Tsardoulias</maintainer>
+
+  <license>BSD</license>
+
+  <url type="bugtracker">https://github.com/pandora-auth-ros-pkg/pandora_slam/issues</url>
+  <url type="repository">https://github.com/pandora-auth-ros-pkg/pandora_slam</url>
+
+  <author>Manos Tsardoulias</author>
+  
+  <buildtool_depend>catkin</buildtool_depend>
+  
+  
+  <run_depend>pandora_slam_2d</run_depend>
+  <run_depend>pandora_slam_3d</run_depend>
+  <run_depend>pandora_pose_estimation</run_depend>
+    
+  <export>
+    <metapackage/>
+  </export>  
+</package>

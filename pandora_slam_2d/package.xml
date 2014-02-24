@@ -1,0 +1,31 @@
+<package>
+	<name>pandora_slam_2d</name>
+	<version>0.1.0</version>
+	<description>pandora_slam</description>
+	<maintainer email="etsardou@gmail.com">Manos Tsardoulias</maintainer> 
+	
+	<license>BSD</license>
+	
+	<url type="bugtracker">https://github.com/pandora-auth-ros-pkg/pandora_slam/issues</url>
+  <url type="repository">https://github.com/pandora-auth-ros-pkg/pandora_slam</url>
+	
+	<author>Manos Tsardoulias</author>
+	<buildtool_depend>catkin</buildtool_depend>
+	
+	<build_depend>roscpp</build_depend> 
+	<build_depend>tf</build_depend> 
+	<build_depend>state_manager</build_depend> 
+	<build_depend>state_manager_communications</build_depend> 
+	<build_depend>diagnostic_updater</build_depend> 
+	<build_depend>crsm_slam</build_depend> 
+	
+	<run_depend>roscpp</run_depend> 
+	<run_depend>tf</run_depend> 
+	<run_depend>state_manager</run_depend>
+	<run_depend>state_manager_communications</run_depend>
+	<run_depend>diagnostic_updater</run_depend>
+	<run_depend>crsm_slam</run_depend> 
+	
+	<export>
+	</export>
+</package>

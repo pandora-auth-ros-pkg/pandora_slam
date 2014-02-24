@@ -1,0 +1,11 @@
+<package>
+	
+	<node>
+		/slam/pandora_slam_node
+		<publisher>/slam/occupancyGridMap</publisher>
+		<publisher>/robot_trajectory</publisher>
+		<subscriber>/laser/scan</subscriber>
+
+	</node>
+
+</package>
