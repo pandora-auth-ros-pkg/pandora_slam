@@ -10,7 +10,7 @@
     
 	</node>
 		
-	<node name="pandora_slam_2d_node" type="pandora_slam_2d_node" pkg="pandora_slam" ns="pandora_slam"/>
+	<node name="pandora_slam_2d_node" type="pandora_slam_2d_node" pkg="pandora_slam_2d" ns="pandora_slam"/>
 	<rosparam file="$(find pandora_slam_2d)/config/crsm_slam/crsm_slam_parameters.yaml" command="load" ns="crsm_slam"/>
 	<node pkg="tf" type="static_transform_publisher" name="world2map" args="0 0 0 0 0 0  world map 100" />
 </launch>
