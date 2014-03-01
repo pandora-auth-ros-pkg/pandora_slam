@@ -1,6 +1,6 @@
 #~ Topics for publishing/subscribing
 
-occupancy_grid_publish_topic : /slam/occupancyGridMap
+occupancy_grid_publish_topic : /slam/map
 robot_trajectory_publish_topic : /robot_trajectory
 trajectory_publisher_frame_id : map
 laser_subscriber_topic : /slam/scan
