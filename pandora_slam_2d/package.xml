@@ -2,7 +2,7 @@
   <name>pandora_slam_2d</name>
   <version>0.1.0</version>
   <description>pandora_slam</description>
-  <maintainer email="etsardou@gmail.com">Manos Tsardoulias</maintainer> 
+  <maintainer email="zalidis@gmail.com">Chris Zalidis</maintainer> 
   
   <license>BSD</license>
   
@@ -18,6 +18,7 @@
   <build_depend>state_manager_communications</build_depend> 
   <build_depend>diagnostic_updater</build_depend> 
   <build_depend>crsm_slam</build_depend> 
+  <build_depend>roslint</build_depend> 
   
   <run_depend>roscpp</run_depend> 
   <run_depend>tf</run_depend> 
@@ -26,6 +27,7 @@
   <run_depend>diagnostic_updater</run_depend>
   <run_depend>crsm_slam</run_depend> 
   <run_depend>hokuyo_node</run_depend> 
+  <run_depend>roslint</run_depend> 
   
   <export>
   </export>

@@ -1,23 +1,27 @@
 # http://ros.org/doc/groovy/api/catkin/html/user_guide/supposed.html
 cmake_minimum_required(VERSION 2.8.3)
 project(pandora_slam_2d)
-find_package(catkin REQUIRED COMPONENTS roscpp 
-	  tf 
-	  state_manager
-	  diagnostic_updater
-	  state_manager_communications
-	  crsm_slam
+find_package(catkin REQUIRED COMPONENTS 
+    roscpp 
+    tf 
+    state_manager
+    diagnostic_updater
+    state_manager_communications
+    crsm_slam
+    roslint
 )
 
 
 catkin_package(
     DEPENDS   
-    CATKIN-DEPENDS
+    CATKIN_DEPENDS
+      roscpp
       tf 
       state_manager
       diagnostic_updater
       state_manager_communications
       crsm_slam
+      roslint
     INCLUDE_DIRS # TODO include
     LIBRARIES # TODO
 )
@@ -44,3 +48,14 @@ target_link_libraries(pandora_slam_2d_node
     pandora_slam_2d
 )
 add_dependencies(pandora_slam_2d_node state_manager_communications_gencpp)
+
+
+set(ROSLINT_CPP_OPTS 
+    "--filter=-whitespace/end_of_line,-build/include_order,-whitespace/blank_line,-whitespace/parens,-whitespace/comments,-whitespace/braces")
+FILE(GLOB_RECURSE ${PROJECT_NAME}_LINT_SRCS 
+     RELATIVE ${PROJECT_SOURCE_DIR} 
+            include/pandora_slam_2d/*.h 
+            src/*.cpp 
+            )
+roslint_cpp(${${PROJECT_NAME}_LINT_SRCS})
+
