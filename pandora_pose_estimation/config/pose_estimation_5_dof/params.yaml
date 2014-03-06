@@ -1,4 +1,4 @@
-imu_topic: sensors/imu
+imu_topic: /sensors/imu
 frame_from: base_footprint
 frame_to: base_link
 pose_freq : 15.0
