@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(pandora_pose_estimation)
-find_package(catkin REQUIRED 
+find_package(catkin REQUIRED COMPONENTS
       roscpp
       tf
       sensor_msgs
@@ -17,6 +17,9 @@ catkin_package(
     sensor_msgs
     roslint
 #  DEPENDS system_lib
+)
+
+include_directories(${catkin_INCLUDE_DIRS}
 )
 
 ############## pose_estimation_5_dof_node ##############

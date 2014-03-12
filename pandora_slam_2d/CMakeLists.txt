@@ -30,7 +30,7 @@ include_directories(include
   ${catkin_INCLUDE_DIRS} 
 )
 
-set(CMAKE_BUILD_TYPE Debug)
+#~ set(CMAKE_BUILD_TYPE Debug)
 
 link_directories(${catkin_LIBRARY_DIRS})
 
