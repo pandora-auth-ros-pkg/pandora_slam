@@ -38,7 +38,7 @@
 #ifndef PANDORA_SLAM_2D_INCLUDE_PANDORA_SLAM_2D_PANDORA_SLAM_2D_H_
 #define PANDORA_SLAM_2D_INCLUDE_PANDORA_SLAM_2D_PANDORA_SLAM_2D_H_
 
-#include "state_client.h"
+#include "state_manager/state_client.h"
 #include <crsm_slam/crsm_slam.h>
 
 namespace pandora_slam_2d
