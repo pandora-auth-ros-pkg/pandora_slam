@@ -35,8 +35,8 @@
 * Author: Manos Tsardoulias
 *********************************************************************/
 
-#ifndef PANDORA_SLAM_2D_INCLUDE_PANDORA_SLAM_2D_PANDORA_SLAM_2D_H_
-#define PANDORA_SLAM_2D_INCLUDE_PANDORA_SLAM_2D_PANDORA_SLAM_2D_H_
+#ifndef PANDORA_SLAM_2D_PANDORA_SLAM_2D_H
+#define PANDORA_SLAM_2D_PANDORA_SLAM_2D_H
 
 #include "state_manager/state_client.h"
 #include <crsm_slam/crsm_slam.h>
@@ -84,5 +84,5 @@ class PandoraSlam : public StateClient
 } // namespace pandora_slam_2d
 
 
-#endif  // PANDORA_SLAM_2D_INCLUDE_PANDORA_SLAM_2D_PANDORA_SLAM_2D_H_
+#endif  // PANDORA_SLAM_2D_PANDORA_SLAM_2D_H
 
