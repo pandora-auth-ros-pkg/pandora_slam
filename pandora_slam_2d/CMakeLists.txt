@@ -22,7 +22,7 @@ catkin_package(
       state_manager_communications
       crsm_slam
       roslint
-    INCLUDE_DIRS # TODO include
+    INCLUDE_DIRS include
     LIBRARIES # TODO
 )
 
@@ -32,14 +32,10 @@ include_directories(include
 
 #~ set(CMAKE_BUILD_TYPE Debug)
 
-link_directories(${catkin_LIBRARY_DIRS})
-
 
 ############ pandora_slam_2d ##############
 add_library(pandora_slam_2d src/pandora_slam_2d.cpp)
-target_link_libraries(pandora_slam_2d ${catkin_LIBRARIES} 
-crsm_slam # remove when exported from crsm_slam
-)
+target_link_libraries(pandora_slam_2d ${catkin_LIBRARIES})
 
 ############## pandora_slam_2d_node ##############
 add_executable(pandora_slam_2d_node  src/pandora_slam_2d_node.cpp)
