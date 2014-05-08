@@ -3,7 +3,7 @@
 occupancy_grid_publish_topic : /slam/map
 robot_trajectory_publish_topic : /robot_trajectory
 trajectory_publisher_frame_id : map
-laser_subscriber_topic : /slam/scan
+laser_subscriber_topic : /laser/scan
 
 #~ Tf frames 
 
@@ -11,7 +11,7 @@ world_frame : world
 base_footprint_frame : base_footprint
 base_frame : base_link
 map_frame : map
-laser_frame : laser
+laser_frame : laser_link
 
 #~ SLAM parameters
 

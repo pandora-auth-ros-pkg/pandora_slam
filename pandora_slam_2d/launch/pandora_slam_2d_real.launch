@@ -1,16 +1,17 @@
 <!--Autonomous Mode SLAM Launch -->
 <launch>
 	
-	<node name="hokuyo_laser" pkg="hokuyo_node" type="hokuyo_node" respawn="false">
-	    <!-- Set the port to connect to here -->
-	    <param name="frame_id" type="string" value="laser"/> 
-	    <param name="port" type="string" value="/dev/ttyACM0"/> 
-	    
-	    <remap from="scan" to="laser/scan"/>
+  <node name="hokuyo_laser" pkg="hokuyo_node" type="hokuyo_node" respawn="false">
+    <!-- Set the port to connect to here -->
+    <param name="frame_id" type="string" value="laser_link"/> 
+    <param name="port" type="string" value="/dev/ttyACM0"/> 
     
-	</node>
-		
-	<node name="pandora_slam_2d_node" type="pandora_slam_2d_node" pkg="pandora_slam_2d" ns="pandora_slam"/>
-	<rosparam file="$(find pandora_slam_2d)/config/crsm_slam/crsm_slam_parameters.yaml" command="load" ns="crsm_slam"/>
-	<node pkg="tf" type="static_transform_publisher" name="world2map" args="0 0 0 0 0 0  world map 100" />
+    <remap from="scan" to="laser/scan"/>
+  </node>
+              
+  <node name="pandora_slam_2d_node" type="pandora_slam_2d_node" pkg="pandora_slam_2d" ns="pandora_slam"/>
+  <rosparam file="$(find pandora_slam_2d)/config/crsm_slam/crsm_slam_parameters.yaml" command="load" ns="crsm_slam"/>
+  
+  <node pkg="tf" type="static_transform_publisher" name="world2map" args="0 0 0 0 0 0  world map 100" />
+
 </launch>
