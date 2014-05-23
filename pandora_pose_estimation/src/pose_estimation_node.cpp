@@ -127,13 +127,24 @@ void PoseEstimation::serveImuMessage(const sensor_msgs::ImuConstPtr& msg) {
 }
 
 void PoseEstimation::publishPose(const ros::TimerEvent&) {
-  tf::Vector3 translation(0, 0, 0.144);
-  tf::Quaternion rotation;
-  rotation.setRPY(imuRoll_, imuPitch_, 0);
-  tf::Transform tfTransformFinal(rotation, translation);
+  tf::Vector3 translationVert(0, 0, 0.145);
+  tf::Quaternion rotationZero;
+  rotationZero.setRPY(0, 0, 0);
+  // base_footprint -> base_stabilized
+  tf::Transform tfTransformFinal(rotationZero, translationVert);
   poseBroadcaster_.sendTransform(tf::StampedTransform(tfTransformFinal, 
                                                       ros::Time::now(),
                                                       frameFrom_, 
+                                                      "base_stabilized"));
+
+  tf::Vector3 translationZero(0, 0, 0);
+  tf::Quaternion rotation;
+  rotation.setRPY(imuRoll_, imuPitch_, 0);
+  // base_stabilized -> base_link
+  tf::Transform tfTransformFinal2(rotation, translationZero);
+  poseBroadcaster_.sendTransform(tf::StampedTransform(tfTransformFinal2, 
+                                                      ros::Time::now(),
+                                                      "base_stabilized", 
                                                       frameTo_));
 }
 
