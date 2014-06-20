@@ -8,7 +8,7 @@
     <param name="track_changes" value="true"/>
     <param name="listen_changes" value="false"/>
     <param name="topic_changes" value="/octomap_tracking_server/changeset" />
-    <remap from="cloud_in" to="/kinect/point_cloud" />
+    <remap from="cloud_in" to="/kinect/depth_registered/points/still" />
   </node>
   
   <node pkg="tf" type="static_transform_publisher" name="world2map" args="0 0 0 0 0 0  world map 100" />
