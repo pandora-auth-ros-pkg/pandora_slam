@@ -127,7 +127,7 @@ void PoseEstimation::serveImuMessage(const sensor_msgs::ImuConstPtr& msg) {
 }
 
 void PoseEstimation::publishPose(const ros::TimerEvent&) {
-  tf::Vector3 translation(0, 0, 0.154);
+  tf::Vector3 translation(0, 0, 0.144);
   tf::Quaternion rotation;
   rotation.setRPY(imuRoll_, imuPitch_, 0);
   tf::Transform tfTransformFinal(rotation, translation);
