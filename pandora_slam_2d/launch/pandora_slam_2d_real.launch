@@ -3,8 +3,10 @@
 	
   <node name="hokuyo_laser" pkg="hokuyo_node" type="hokuyo_node" respawn="false">
     <!-- Set the port to connect to here -->
-    <param name="frame_id" type="string" value="laser_link"/> 
-    <param name="port" type="string" value="/dev/hokuyo"/> 
+    <param name="frame_id" type="string" value="laser_link"/>
+    <param name="port" type="string" value="/dev/hokuyo"/>
+    <param name="min_ang" type="double" value="-2"/>
+    <param name="max_ang" type="double" value="2"/>
     
     <remap from="scan" to="laser/scan"/>
   </node>
