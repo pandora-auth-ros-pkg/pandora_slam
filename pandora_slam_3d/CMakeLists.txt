@@ -19,90 +19,14 @@ catkin_package(
 )
 
 include_directories(
-	include
-	${catkin_INCLUDE_DIRS}
+  include
+  ${catkin_INCLUDE_DIRS}
 )
 
-#~ laser_scan_to_point_cloud_converter
-add_library(laser_scan_to_point_cloud_converter 
-            src/laser_scan_to_point_cloud_converter/laser_scan_to_point_cloud_converter.cpp
-            )
-target_link_libraries(laser_scan_to_point_cloud_converter 
-					  ${catkin_LIBRARIES}
-					  )
+add_executable(
+  laser_scan_to_point_cloud_converter
+  src/laser_scan_to_point_cloud_converter/laser_scan_to_point_cloud_converter.cpp)
 
-
-add_executable(laser_scan_to_point_cloud_converter_node 
-			   src/laser_scan_to_point_cloud_converter/laser_scan_to_point_cloud_converter_node.cpp
-			   )
-target_link_libraries(laser_scan_to_point_cloud_converter_node 
-					  laser_scan_to_point_cloud_converter
-					  ${catkin_LIBRARIES} 
-					  )
-
-#pandora_icp_slam_3d_laser 
-#~ add_library(pandora_icp_slam_3d 
-			#~ src/pandora_icp_slam_3d_laser/pandora_icp_slam_3d_laser.cpp
-			#~ )
-#~ target_link_libraries(pandora_icp_slam_3d 
-                      #~ ${catkin_LIBRARIES}
-                      #~ )
-#~ 
-#~ add_executable(pandora_icp_slam_3d_node 
-			   #~ src/pandora_icp_slam_3d_laser/pandora_icp_slam_3d_laser_node.cpp
-			   #~ )
-#~ target_link_libraries(pandora_icp_slam_3d_node 
-					  #~ pandora_icp_slam_3d
-					  #~ ${catkin_LIBRARIES} 
-					  #~ )
-					  
-					  
-#pandora_icp_slam_3d_laser_map 
-#~ add_library(pandora_icp_slam_3d 
-			#~ src/pandora_icp_slam_3d_laser_map/pandora_icp_slam_3d_laser_map.cpp
-			#~ )
-#~ target_link_libraries(pandora_icp_slam_3d 
-                      #~ ${catkin_LIBRARIES}
-                      #~ )
-#~ 
-#~ add_executable(pandora_icp_slam_3d_node 
-			   #~ src/pandora_icp_slam_3d_laser_map/pandora_icp_slam_3d_laser_map_node.cpp
-			   #~ )
-#~ target_link_libraries(pandora_icp_slam_3d_node 
-					  #~ pandora_icp_slam_3d
-					  #~ ${catkin_LIBRARIES} 
-					  #~ )
-					  
-					  
-#pandora_icp_slam_3d_kinect 
-#~ add_library(pandora_icp_slam_3d 
-			#~ src/pandora_icp_slam_3d_kinect/pandora_icp_slam_3d_kinect.cpp
-			#~ )
-#~ target_link_libraries(pandora_icp_slam_3d 
-                      #~ ${catkin_LIBRARIES}
-                      #~ )
-#~ 
-#~ add_executable(pandora_icp_slam_3d_node 
-			   #~ src/pandora_icp_slam_3d_kinect/pandora_icp_slam_3d_kinect_node.cpp
-			   #~ )
-#~ target_link_libraries(pandora_icp_slam_3d_node 
-					  #~ pandora_icp_slam_3d
-					  #~ ${catkin_LIBRARIES} 
-					  #~ )
-					  
-					  
-#pandora_icp_slam_3d_kinect_map 
-add_library(pandora_icp_slam_3d 
-			src/pandora_icp_slam_3d_kinect_map/pandora_icp_slam_3d_kinect_map.cpp
-			)
-target_link_libraries(pandora_icp_slam_3d 
-                      ${catkin_LIBRARIES}
-                      )
-
-add_executable(pandora_icp_slam_3d_node 
-			   src/pandora_icp_slam_3d_kinect_map/pandora_icp_slam_3d_kinect_map_node.cpp
-			   )
-target_link_libraries(pandora_icp_slam_3d_node 
-					  pandora_icp_slam_3d
-					  ${catkin_LIBRARIES} 
-					  )
+target_link_libraries(
+  laser_scan_to_point_cloud_converter
+  ${catkin_LIBRARIES})

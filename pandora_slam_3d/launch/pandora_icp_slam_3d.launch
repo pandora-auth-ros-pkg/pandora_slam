@@ -1,7 +1,0 @@
-<launch>
-	
-	<node name="pandora_icp_slam_3d_node" type="pandora_icp_slam_3d_node" 
-		  pkg="pandora_slam_3d" respawn="false" output="screen" ns="slam_3d" />
-	  
-</launch>
-
