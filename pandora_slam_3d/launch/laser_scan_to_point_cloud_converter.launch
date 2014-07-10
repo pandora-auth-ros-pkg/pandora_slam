@@ -1,7 +1,14 @@
 <launch>
-	
-	<node name="laser_scan_to_point_cloud_converter_node" type="laser_scan_to_point_cloud_converter_node" 
-		  pkg="pandora_slam_3d" respawn="false" output="screen" />
-	  
+
+  <node
+    name="laser_scan_to_point_cloud_converter"
+    type="laser_scan_to_point_cloud_converter" 
+    pkg="pandora_slam_3d"/>
+
+  <node
+    name="point_cloud_aggregator"
+    type="point_cloud_aggregator" 
+    pkg="pandora_slam_3d"/>
+
 </launch>
 

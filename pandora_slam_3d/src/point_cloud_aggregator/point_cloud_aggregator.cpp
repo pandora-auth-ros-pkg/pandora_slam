@@ -35,46 +35,78 @@
 * Author: Evangelos Apostolidis
 *********************************************************************/
 #include "ros/ros.h"
-#include "laser_geometry/laser_geometry.h"
+#include "sensor_msgs/PointCloud2.h"
+#include <tf/transform_listener.h>
+#include "pcl_ros/impl/transforms.hpp"
 
 namespace pandora_slam
 {
-  class LaserScanToPointCloudConverter
+  class PointCloudAggregator
   {
    public:
-    LaserScanToPointCloudConverter();
+    PointCloudAggregator();
    private:
-    void scanCallback(const sensor_msgs::LaserScan::ConstPtr& scan_in);
+    void cloudCallback(const sensor_msgs::PointCloud2ConstPtr& cloud_in);
 
     ros::NodeHandle node_handle_;
     ros::Subscriber subscriber_;
     ros::Publisher publisher_;
+    ros::Time last_time_published_;
+    ros::Duration publish_period_;
+    sensor_msgs::PointCloud2 aggregated_cloud_;
   };
 
-  LaserScanToPointCloudConverter::LaserScanToPointCloudConverter()
+  PointCloudAggregator::PointCloudAggregator()
   {
-    subscriber_ = node_handle_.subscribe("/laser/scan",1,
-      &LaserScanToPointCloudConverter::scanCallback,this);
+    subscriber_ = node_handle_.subscribe("/laser/point_cloud",1,
+      &PointCloudAggregator::cloudCallback,this);
 
     publisher_ = node_handle_.advertise<sensor_msgs::PointCloud2>(
-      "/laser/point_cloud", 5);
+      "/laser/aggregated_point_cloud", 5);
+
+    last_time_published_ = ros::Time::now();
+    publish_period_ = ros::Duration(0.5);
   }
 
-  void LaserScanToPointCloudConverter::scanCallback(
-    const sensor_msgs::LaserScan::ConstPtr& scan_in)
+  void PointCloudAggregator::cloudCallback(
+    const sensor_msgs::PointCloud2ConstPtr& cloud_in)
   {
-    laser_geometry::LaserProjection projector_;
-    sensor_msgs::PointCloud2 cloud;
-    projector_.projectLaser(*scan_in, cloud);
-    publisher_.publish(cloud);
+    sensor_msgs::PointCloud2 transformed_cloud_in;
+    tf::TransformListener tf_listener;
+    try
+    {
+      pcl_ros::transformPointCloud(
+        "/laser_servo_link", *cloud_in, transformed_cloud_in, tf_listener);
+    }
+    catch (tf::TransformException ex)
+    {
+      return;
+    }
+    if (aggregated_cloud_.width == 0)
+    {
+      aggregated_cloud_ = transformed_cloud_in;
+      return;
+    }
+    for (int ii = 0; ii < cloud_in->data.size(); ii++)
+    {
+      aggregated_cloud_.data.push_back(transformed_cloud_in.data[ii]);
+      aggregated_cloud_.height++;
+    }
+    if (ros::Time::now() - last_time_published_ > publish_period_)
+    {
+      publisher_.publish(aggregated_cloud_);
+      aggregated_cloud_.data.clear();
+      aggregated_cloud_.height = 0;
+      last_time_published_ = ros::Time::now();
+    }
   }
 }  // namespace pandora_slam
 
+
 int main (int argc, char **argv)
 {
-  ros::init(argc,argv,"laser_scan_to_point_cloud_converter");
-  pandora_slam::LaserScanToPointCloudConverter
-    laserScanToPointCloudConverter;
+  ros::init(argc,argv,"point_cloud_aggregator");
+  pandora_slam::PointCloudAggregator point_cloud_aggregator;
 
   ros::spin();
   return 0;

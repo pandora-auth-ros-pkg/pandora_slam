@@ -5,6 +5,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
   sensor_msgs
+  tf
   laser_geometry
   octomap_server
 )
@@ -29,4 +30,12 @@ add_executable(
 
 target_link_libraries(
   laser_scan_to_point_cloud_converter
+  ${catkin_LIBRARIES})
+
+add_executable(
+  point_cloud_aggregator
+  src/point_cloud_aggregator/point_cloud_aggregator.cpp)
+
+target_link_libraries(
+  point_cloud_aggregator
   ${catkin_LIBRARIES})
