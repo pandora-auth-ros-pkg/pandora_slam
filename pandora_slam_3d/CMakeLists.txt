@@ -39,3 +39,11 @@ add_executable(
 target_link_libraries(
   point_cloud_aggregator
   ${catkin_LIBRARIES})
+
+add_executable(
+  point_cloud_subsampler
+  src/point_cloud_subsampler/point_cloud_subsampler.cpp)
+
+target_link_libraries(
+  point_cloud_subsampler
+  ${catkin_LIBRARIES})
