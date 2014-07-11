@@ -1,0 +1,15 @@
+<launch>
+  <arg name="kinect" default="true"/>
+  <arg name="publish_tf" default="true"/>
+
+  <include if="$(arg kinect)" file="$(find openni_launch)/launch/openni.launch">
+    <arg name="camera" value="kinect" />
+    <arg name="depth_registration" value="true" />
+    <arg name="publish_tf" value="$(arg publish_tf)" />
+  </include>
+
+  <node
+    name="point_cloud_subsampler"
+    type="point_cloud_subsampler"
+    pkg="pandora_slam_3d"/>
+</launch>

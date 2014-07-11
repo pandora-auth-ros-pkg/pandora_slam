@@ -35,12 +35,19 @@
 * Author: Evangelos Apostolidis
 *********************************************************************/
 #include "ros/ros.h"
-#include "sensor_msgs/PointCloud2.h"
+#include <message_filters/subscriber.h>
+#include <message_filters/synchronizer.h>
+#include <message_filters/sync_policies/approximate_time.h>
+#include <sensor_msgs/Image.h>
+#include <sensor_msgs/PointCloud2.h>
 #include "pcl_ros/point_cloud.h"
-#include <pcl/range_image/range_image.h>
-#include <pcl/visualization/range_image_visualizer.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <pcl/filters/filter.h>
 
-typedef pcl::PointCloud<pcl::PointXYZRGB> PointCloud;
+typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
+typedef message_filters::sync_policies::ApproximateTime<
+  sensor_msgs::Image, sensor_msgs::PointCloud2> SyncPolicy;
+
 namespace pandora_slam
 {
   class PointCloudSubsampler
@@ -48,53 +55,55 @@ namespace pandora_slam
    public:
     PointCloudSubsampler();
    private:
-    void cloudCallback(
-      const PointCloud::ConstPtr& cloud_in);
+    void depthAndCloudCallback(
+      const sensor_msgs::ImageConstPtr& depth_image,
+      const sensor_msgs::PointCloud2ConstPtr& cloud_in);
 
     ros::NodeHandle node_handle_;
-    ros::Subscriber subscriber_;
-    ros::Publisher publisher_;
-    pcl::visualization::RangeImageVisualizer range_image_widget_;
+    ros::Publisher cloud_publisher_;
+
+    message_filters::Subscriber<sensor_msgs::Image> *depth_image_subscriber_ptr_;
+    message_filters::Subscriber<sensor_msgs::PointCloud2> *cloud_subscriber_ptr_;
+    message_filters::Synchronizer<SyncPolicy> *synchronizer_ptr_;
   };
 
-  PointCloudSubsampler::PointCloudSubsampler() :
-    range_image_widget_("Range image")
+  PointCloudSubsampler::PointCloudSubsampler()
   {
-    subscriber_ = node_handle_.subscribe< PointCloud >(
-      "/kinect/depth_registered/points", 1,
-      &PointCloudSubsampler::cloudCallback,this);
+    depth_image_subscriber_ptr_ =
+      new message_filters::Subscriber<sensor_msgs::Image>(
+        node_handle_, "/kinect/depth_registered/image_raw", 1);
+    cloud_subscriber_ptr_ =
+      new message_filters::Subscriber<sensor_msgs::PointCloud2>(
+        node_handle_, "/kinect/depth_registered/points", 1);
+    synchronizer_ptr_ =
+      new message_filters::Synchronizer<SyncPolicy>(
+        SyncPolicy(5), *depth_image_subscriber_ptr_, *cloud_subscriber_ptr_);
+    synchronizer_ptr_->registerCallback(boost::bind(
+      &PointCloudSubsampler::depthAndCloudCallback,this, _1, _2));
 
-    publisher_ = node_handle_.advertise<sensor_msgs::PointCloud2>(
+    cloud_publisher_ = node_handle_.advertise<PointCloud>(
       "/kinect/depth_registered/points/subsampled", 5);
   }
 
-  void PointCloudSubsampler::cloudCallback(
-    const PointCloud::ConstPtr& cloud_in)
+  void PointCloudSubsampler::depthAndCloudCallback(
+    const sensor_msgs::ImageConstPtr& depth_image,
+    const sensor_msgs::PointCloud2ConstPtr& cloud_in)
   {
-    PointCloud cloud(*cloud_in);
-    // Correct dimensions published by gazebo plugin
-    cloud.width = 640;
-    cloud.height = 480;
-    pcl::RangeImage range_image;
-    range_image.createFromPointCloud(
-      cloud,
-      pcl::deg2rad (0.5f),
-      pcl::deg2rad (360.0f),
-      pcl::deg2rad (180.0f),
-      Eigen::Affine3f::Identity (),
-      pcl::RangeImage::CAMERA_FRAME,
-      0.0f,
-      0.0f,
-      0);
+    PointCloud pointCloud;
+    pcl::fromROSMsg(*cloud_in, pointCloud);
+    std::vector< int > index;
+    pcl::removeNaNFromPointCloud(pointCloud, pointCloud, index);
 
-    range_image_widget_.showRangeImage (range_image);
+    // Correct dimensions published by gazebo plugin
+    pointCloud.width = 640;
+    pointCloud.height = 480;
   }
 }  // namespace pandora_slam
 
 
 int main (int argc, char **argv)
 {
-  ros::init(argc,argv,"point_cloud_aggregator");
+  ros::init(argc,argv,"point_cloud_subsampler");
   pandora_slam::PointCloudSubsampler point_cloud_subsampler;
 
   ros::spin();
