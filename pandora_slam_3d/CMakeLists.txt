@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   laser_geometry
   octomap_server
+  cv_bridge
 )
 
 set(CMAKE_BUILD_TYPE Debug)
