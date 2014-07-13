@@ -45,8 +45,7 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/filters/filter.h>
 #include <cv_bridge/cv_bridge.h>
-#include "opencv2/imgproc/imgproc.hpp"
-#include "opencv2/highgui/highgui.hpp"
+#include "point_cloud_subsampler/edge_detector.h"
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 typedef message_filters::sync_policies::ApproximateTime<
@@ -62,7 +61,7 @@ namespace pandora_slam
     void depthAndCloudCallback(
       const sensor_msgs::ImageConstPtr& depth_image,
       const sensor_msgs::PointCloud2ConstPtr& cloud_in);
-    void cannyThreshold();
+    void cannyThreshold(cv::Mat src);
 
     ros::NodeHandle node_handle_;
     ros::Publisher cloud_publisher_;
@@ -71,15 +70,7 @@ namespace pandora_slam
     message_filters::Subscriber<sensor_msgs::PointCloud2> *cloud_subscriber_ptr_;
     message_filters::Synchronizer<SyncPolicy> *synchronizer_ptr_;
     
-    cv::Mat src, src_gray;
-    cv::Mat dst, detected_edges;
-
-    int edgeThresh;
-    int lowThreshold;
-    int max_lowThreshold;
-    int ratio;
-    int kernel_size;
-    char* window_name;
+    EdgeDetector edgeDetector_;
   };
 
   PointCloudSubsampler::PointCloudSubsampler()
@@ -98,53 +89,35 @@ namespace pandora_slam
 
     cloud_publisher_ = node_handle_.advertise<PointCloud>(
       "/kinect/depth_registered/points/subsampled", 5);
-    
-    edgeThresh = 1;
-    lowThreshold = 70;
-    max_lowThreshold = 100;
-    ratio = 3;
-    kernel_size = 3;
-    window_name = "Edge Map";
   }
 
   void PointCloudSubsampler::depthAndCloudCallback(
     const sensor_msgs::ImageConstPtr& depth_image,
     const sensor_msgs::PointCloud2ConstPtr& cloud_in)
   {
-    //~ PointCloud pointCloud;
-    //~ pcl::fromROSMsg(*cloud_in, pointCloud);
-    //~ std::vector< int > index;
-    //~ pcl::removeNaNFromPointCloud(pointCloud, pointCloud, index);
-//~
-    //~ // Correct dimensions published by gazebo plugin
-    //~ pointCloud.width = 640;
-    //~ pointCloud.height = 480;
     /// Convert sensor_msgs::Image to CvImage
-    cv_bridge::CvImagePtr cv_depth_image_ptr =
-      cv_bridge::toCvCopy(depth_image, sensor_msgs::image_encodings::TYPE_32FC1);
-    src = cv_depth_image_ptr->image;
-    /// Create a matrix of the same type and size as src (for dst)
-    dst.create(src.size(), src.type());
-    /// Create a window
-    //~ cv::namedWindow(window_name, CV_WINDOW_AUTOSIZE );
-    /// Show the image
-    cannyThreshold();
+    cv_bridge::CvImageConstPtr cv_depth_image_ptr =
+      cv_bridge::toCvShare(depth_image, sensor_msgs::image_encodings::TYPE_8UC1);
+
+    /// Detect edges
+    cv::Mat edges = edgeDetector_.detect(cv_depth_image_ptr->image);
+
+    /// Create pcl Point Cloud from sensor_msgs::PointCloud2
+    PointCloud inputCloud;
+    pcl::fromROSMsg(*cloud_in, inputCloud);
+
+    /// Create edge point cloud
+    PointCloud edgePointCloud;
+    for (int ii = 0; ii < edges.cols * edges.rows; ii++)
+    {
+      if (edges.data[ii] == 255)
+      {
+        edgePointCloud.push_back(inputCloud[ii]);
+      }
+    }
+    edgePointCloud.header = inputCloud.header;
+    cloud_publisher_.publish(edgePointCloud);
   }
-
-  void PointCloudSubsampler::cannyThreshold()
-  {
-    /// Reduce noise with a kernel 3x3
-    cv::blur(src_gray, detected_edges, cv::Size(3,3));
-    /// Canny detector
-    cv::Canny(detected_edges, detected_edges, lowThreshold,
-      lowThreshold * ratio, kernel_size );
-    /// Using Canny's output as a mask, we display our result
-    dst = cv::Scalar::all(0);
-
-    src.copyTo(dst, detected_edges);
-    cv::imshow(window_name, dst);
-    cv::waitKey(1);
-   }
 }  // namespace pandora_slam
 
 int main (int argc, char **argv)
