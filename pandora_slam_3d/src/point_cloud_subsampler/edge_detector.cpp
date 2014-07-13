@@ -40,7 +40,7 @@ namespace pandora_slam
 {
   EdgeDetector::EdgeDetector()
   {
-    low_threshold_ = 20;
+    low_threshold_ = 10;
     ratio_ = 3;
     kernel_size_ = 3;
     window_name_ = "Edge Map";
@@ -66,5 +66,31 @@ namespace pandora_slam
     //~ cv::waitKey(1);
     
     return detected_edges;
+   }
+
+   void EdgeDetector::inflateEdges(cv::Mat &edges, int inflation_size)
+   {
+    if (inflation_size < 3 && inflation_size % 2 != 1)
+    {
+      inflation_size = 3;
+    }
+    cv::Mat dst;
+    cv::boxFilter(
+      edges, edges, edges.type(), cv::Size(inflation_size, inflation_size),
+      cv::Point(-1, -1), false);
+
+    for (int ii = 0; ii < edges.cols * edges.rows; ii++)
+    {
+      if (edges.data[ii] != 0)
+      {
+        edges.data[ii] == 255;
+      }
+    }
+
+    dst.create(edges.size(), edges.type());
+    dst = cv::Scalar::all(0);
+    edges.copyTo(dst, edges);
+    //~ cv::imshow("Inflated image", dst);
+    //~ cv::waitKey(1);
    }
 }  // namespace pandora_slam

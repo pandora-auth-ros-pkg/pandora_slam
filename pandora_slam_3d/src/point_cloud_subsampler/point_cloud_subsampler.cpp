@@ -71,6 +71,7 @@ namespace pandora_slam
     message_filters::Synchronizer<SyncPolicy> *synchronizer_ptr_;
     
     EdgeDetector edgeDetector_;
+    int inflation_size_;
   };
 
   PointCloudSubsampler::PointCloudSubsampler()
@@ -89,6 +90,8 @@ namespace pandora_slam
 
     cloud_publisher_ = node_handle_.advertise<PointCloud>(
       "/kinect/depth_registered/points/subsampled", 5);
+
+    inflation_size_ = 21;
   }
 
   void PointCloudSubsampler::depthAndCloudCallback(
@@ -101,6 +104,8 @@ namespace pandora_slam
 
     /// Detect edges
     cv::Mat edges = edgeDetector_.detect(cv_depth_image_ptr->image);
+    /// Inflate edges
+    edgeDetector_.inflateEdges(edges, inflation_size_);
 
     /// Create pcl Point Cloud from sensor_msgs::PointCloud2
     PointCloud inputCloud;

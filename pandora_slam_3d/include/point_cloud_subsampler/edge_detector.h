@@ -45,6 +45,7 @@ namespace pandora_slam
    public:
     EdgeDetector();
     cv::Mat detect(const cv::Mat &src);
+    void inflateEdges(cv::Mat &edges, int inflation_size);
    private:
     int low_threshold_;
     int max_low_threshold_;
