@@ -1,0 +1,21 @@
+<launch>
+  <arg name="kinect" default="true"/>
+  <arg name="xtion" default="false"/>
+  <arg name="publish_tf" default="true"/>
+
+  <group unless="$(arg xtion)">
+    <include if="$(arg kinect)" file="$(find openni_launch)/launch/openni.launch">
+      <arg name="camera" value="kinect" />
+      <arg name="depth_registration" value="true" />
+      <arg name="publish_tf" value="$(arg publish_tf)" />
+    </include>
+  </group>
+
+  <group unless="$(arg kinect)">
+    <include if="$(arg xtion)" file="$(find openni2_launch)/launch/openni2.launch">
+      <arg name="camera" value="kinect" />
+      <arg name="depth_registration" value="true" />
+      <arg name="publish_tf" value="$(arg publish_tf)" />
+    </include>
+  </group>
+</launch>

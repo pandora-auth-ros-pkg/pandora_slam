@@ -1,14 +1,26 @@
 <launch>
+  <arg name="openni" default="true"/>
+  <arg name="kinect" default="true"/>
+  <arg name="xtion" default="false"/>
+  <arg name="publish_tf" default="true"/>
+
+  <include if="$(arg openni)" file="$(find pandora_slam_3d)/launch/openni.launch">
+    <arg name="kinect" value="$(arg kinect)"/>
+    <arg name="xtion" value="$(arg xtion)"/>
+    <arg name="publish_tf" value="$(arg publish_tf)"/>
+  </include>
 
   <node
     name="laser_scan_to_point_cloud_converter"
     type="laser_scan_to_point_cloud_converter" 
-    pkg="pandora_slam_3d"/>
+    pkg="pandora_slam_3d"
+    output="screen"/>
 
   <node
     name="point_cloud_aggregator"
     type="point_cloud_aggregator" 
-    pkg="pandora_slam_3d"/>
+    pkg="pandora_slam_3d"
+    output="screen"/>
 
 </launch>
 
