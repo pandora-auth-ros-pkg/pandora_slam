@@ -43,8 +43,16 @@ namespace pandora_slam
   class EdgeDetector
   {
    public:
+    enum
+    {
+      CANNY = 0,
+      SCHARR = 1,
+      CURVATURE =2
+    };
     EdgeDetector();
-    cv::Mat detect(const cv::Mat &src);
+    cv::Mat detect(const cv::Mat &src, int method);
+    cv::Mat cannyEdges(const cv::Mat &src);
+    cv::Mat scharrDerivatives(const cv::Mat &src);
     void inflateEdges(cv::Mat &edges, int inflation_size);
    private:
     int low_threshold_;

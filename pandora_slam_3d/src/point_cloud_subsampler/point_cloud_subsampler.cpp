@@ -61,7 +61,6 @@ namespace pandora_slam
     void depthAndCloudCallback(
       const sensor_msgs::ImageConstPtr& depth_image,
       const sensor_msgs::PointCloud2ConstPtr& cloud_in);
-    void cannyThreshold(cv::Mat src);
 
     ros::NodeHandle node_handle_;
     ros::Publisher cloud_publisher_;
@@ -91,7 +90,7 @@ namespace pandora_slam
     cloud_publisher_ = node_handle_.advertise<PointCloud>(
       "/kinect/depth_registered/points/subsampled", 5);
 
-    inflation_size_ = 21;
+    inflation_size_ = 15;
   }
 
   void PointCloudSubsampler::depthAndCloudCallback(
@@ -103,7 +102,8 @@ namespace pandora_slam
       cv_bridge::toCvShare(depth_image, sensor_msgs::image_encodings::TYPE_8UC1);
 
     /// Detect edges
-    cv::Mat edges = edgeDetector_.detect(cv_depth_image_ptr->image);
+    cv::Mat edges = edgeDetector_.detect(cv_depth_image_ptr->image,
+      EdgeDetector::CURVATURE);
     /// Inflate edges
     edgeDetector_.inflateEdges(edges, inflation_size_);
 

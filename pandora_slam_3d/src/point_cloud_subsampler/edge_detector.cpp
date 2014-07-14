@@ -46,7 +46,32 @@ namespace pandora_slam
     window_name_ = "Edge Map";
   }
 
-  cv::Mat EdgeDetector::detect(const cv::Mat &src)
+  cv::Mat EdgeDetector::detect(const cv::Mat &src, int method)
+  {
+    if (method == CANNY)
+    {
+      return cannyEdges(src);
+    }
+    else if (method == SCHARR)
+    {
+      return scharrDerivatives(src);
+    }
+    else if (method == CURVATURE)
+    {
+      return cannyEdges(scharrDerivatives(src));
+    }
+    else
+    {
+      ROS_ERROR_STREAM("Computation method passed doesn't exist. " <<
+        "Returning black image");
+      cv::Mat dst;
+      dst.create(src.size(), src.type());
+      dst = cv::Scalar::all(0);
+      return dst;
+    }
+   }
+
+  cv::Mat EdgeDetector::cannyEdges(const cv::Mat &src)
   {
     cv::Mat dst, detected_edges;
 
@@ -66,13 +91,47 @@ namespace pandora_slam
     //~ cv::waitKey(1);
     
     return detected_edges;
-   }
+  }
 
-   void EdgeDetector::inflateEdges(cv::Mat &edges, int inflation_size)
-   {
-    if (inflation_size < 3 && inflation_size % 2 != 1)
+  cv::Mat EdgeDetector::scharrDerivatives(const cv::Mat &src)
+  {
+    cv::Mat src_blurred;
+    cv::Mat grad;
+    int scale = 1;
+    int delta = 0;
+    int ddepth = CV_16S;
+    cv::GaussianBlur(src, src_blurred, cv::Size(3,3), 0, 0, cv::BORDER_DEFAULT);
+
+    /// Generate grad_x and grad_y
+    cv::Mat grad_x, grad_y;
+    cv::Mat abs_grad_x, abs_grad_y;
+
+    /// Gradient X
+    cv::Scharr(src_blurred, grad_x, ddepth, 1, 0, scale, delta, cv::BORDER_DEFAULT);
+    cv::convertScaleAbs( grad_x, abs_grad_x );
+
+    /// Gradient Y
+    cv::Scharr(src_blurred, grad_y, ddepth, 0, 1, scale, delta, cv::BORDER_DEFAULT);
+    cv::convertScaleAbs( grad_y, abs_grad_y );
+
+    /// Total Gradient (approximate)
+    cv::addWeighted( abs_grad_x, 0.5, abs_grad_y, 0.5, 0, grad );
+
+    //~ cv::imshow("Scharr", grad );
+    //~ cv::waitKey(0);
+
+    return grad;
+  }
+  
+  void EdgeDetector::inflateEdges(cv::Mat &edges, int inflation_size)
+  {
+    if (inflation_size < 3)
     {
       inflation_size = 3;
+    }
+    else if (inflation_size % 2 != 1)
+    {
+      inflation_size++;
     }
     cv::Mat dst;
     cv::boxFilter(
@@ -91,6 +150,6 @@ namespace pandora_slam
     dst = cv::Scalar::all(0);
     edges.copyTo(dst, edges);
     //~ cv::imshow("Inflated image", dst);
-    //~ cv::waitKey(1);
+    //~ cv::waitKey(0);
    }
 }  // namespace pandora_slam
