@@ -9,9 +9,13 @@ find_package(catkin REQUIRED COMPONENTS
   laser_geometry
   octomap_server
   cv_bridge
+  dynamic_reconfigure
 )
 
 set(CMAKE_BUILD_TYPE Debug)
+
+generate_dynamic_reconfigure_options(
+  cfg/point_cloud_subsampler.cfg)
 
 catkin_package(
 #  INCLUDE_DIRS include
@@ -52,6 +56,10 @@ target_link_libraries(
 add_executable(
   point_cloud_subsampler
   src/point_cloud_subsampler/point_cloud_subsampler.cpp)
+
+add_dependencies(
+  point_cloud_subsampler
+  ${PROJECT_NAME}_gencfg)
 
 target_link_libraries(
   point_cloud_subsampler

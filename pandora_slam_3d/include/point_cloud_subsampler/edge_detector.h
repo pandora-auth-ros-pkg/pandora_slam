@@ -47,18 +47,66 @@ namespace pandora_slam
     {
       CANNY = 0,
       SCHARR = 1,
-      CURVATURE =2
+      CURVATURE = 2
     };
     EdgeDetector();
+    inline void setCannyLowThreshold(int canny_low_threshold)
+    {
+      canny_low_threshold_ = canny_low_threshold;
+    };
+    inline void setCannyRatio(int canny_ratio)
+    {
+      canny_ratio_ = canny_ratio;
+    };
+    inline void setCannyKernelSize(int canny_kernel_size)
+    {
+      if (canny_kernel_size < 3)
+      {
+        canny_kernel_size = 3;
+      }
+      else if (canny_kernel_size % 2 != 1)
+      {
+        canny_kernel_size++;
+      }
+      canny_kernel_size_ = canny_kernel_size;
+    };
+
+    inline void setScharrScale(int scharr_scale)
+    {
+      scharr_scale_ = scharr_scale;
+    };
+    inline void setScharrDelta(int scharr_delta)
+    {
+      scharr_delta_ = scharr_delta;
+    };
+    inline void setScharrDdepth(int scharr_ddepth)
+    {
+      scharr_ddepth_ = scharr_ddepth;
+    };
+    
+    inline void setShowEdgesImage(bool show_edges_image)
+    {
+      show_edges_image_ = show_edges_image;
+    };
+    inline void setShowInflationImage(bool show_inflation_image)
+    {
+      show_inflation_image_ = show_inflation_image;
+    };
+    
     cv::Mat detect(const cv::Mat &src, int method);
     cv::Mat cannyEdges(const cv::Mat &src);
     cv::Mat scharrDerivatives(const cv::Mat &src);
     void inflateEdges(cv::Mat &edges, int inflation_size);
    private:
-    int low_threshold_;
-    int max_low_threshold_;
-    int ratio_;
-    int kernel_size_;
-    std::string window_name_;
+    int canny_low_threshold_;
+    int canny_ratio_;
+    int canny_kernel_size_;
+
+    int scharr_scale_;
+    int scharr_delta_;
+    int scharr_ddepth_;
+    
+    bool show_edges_image_;
+    bool show_inflation_image_;
   };
 }  // namespace pandora_slam

@@ -40,10 +40,16 @@ namespace pandora_slam
 {
   EdgeDetector::EdgeDetector()
   {
-    low_threshold_ = 10;
-    ratio_ = 3;
-    kernel_size_ = 3;
-    window_name_ = "Edge Map";
+    canny_low_threshold_ = 10;
+    canny_ratio_ = 3;
+    canny_kernel_size_ = 3;
+    
+    scharr_scale_ = 1;
+    scharr_delta_ = 0;
+    scharr_ddepth_ = CV_16S;
+
+    show_edges_image_ = false;
+    show_inflation_image_ = false;
   }
 
   cv::Mat EdgeDetector::detect(const cv::Mat &src, int method)
@@ -77,18 +83,25 @@ namespace pandora_slam
 
     /// Reduce noise with a kernel 3x3
     cv::blur(src, detected_edges, cv::Size(3,3));
+    if (show_edges_image_)
+    {
+      cv::imshow("Source Map", detected_edges);
+      cv::waitKey(1);
+    }
     /// Canny detector
-    cv::Canny(detected_edges, detected_edges, low_threshold_,
-      low_threshold_ * ratio_, kernel_size_ );
+    cv::Canny(detected_edges, detected_edges, canny_low_threshold_,
+      canny_low_threshold_ * canny_ratio_, canny_kernel_size_ );
     /// Create a matrix of the same type and size as src (for dst)
     dst.create(src.size(), src.type());
     /// Using Canny's output as a mask, we display our result
     dst = cv::Scalar::all(0);
-
     src.copyTo(dst, detected_edges);
-    //~ cv::imshow(window_name_, dst);
-    //~ cv::imshow("Source image", src);
-    //~ cv::waitKey(1);
+
+    if (show_edges_image_)
+    {
+      cv::imshow("Edge Map", dst);
+      cv::waitKey(1);
+    }
     
     return detected_edges;
   }
@@ -97,9 +110,6 @@ namespace pandora_slam
   {
     cv::Mat src_blurred;
     cv::Mat grad;
-    int scale = 1;
-    int delta = 0;
-    int ddepth = CV_16S;
     cv::GaussianBlur(src, src_blurred, cv::Size(3,3), 0, 0, cv::BORDER_DEFAULT);
 
     /// Generate grad_x and grad_y
@@ -107,18 +117,26 @@ namespace pandora_slam
     cv::Mat abs_grad_x, abs_grad_y;
 
     /// Gradient X
-    cv::Scharr(src_blurred, grad_x, ddepth, 1, 0, scale, delta, cv::BORDER_DEFAULT);
-    cv::convertScaleAbs( grad_x, abs_grad_x );
+    cv::Scharr(src_blurred, grad_x, scharr_ddepth_, 1, 0, scharr_scale_,
+      scharr_delta_, cv::BORDER_DEFAULT);
+    cv::convertScaleAbs(grad_x, abs_grad_x);
 
     /// Gradient Y
-    cv::Scharr(src_blurred, grad_y, ddepth, 0, 1, scale, delta, cv::BORDER_DEFAULT);
-    cv::convertScaleAbs( grad_y, abs_grad_y );
+    cv::Scharr(src_blurred, grad_y, scharr_ddepth_, 0, 1, scharr_scale_,
+      scharr_delta_, cv::BORDER_DEFAULT);
+    cv::convertScaleAbs(grad_y, abs_grad_y);
 
     /// Total Gradient (approximate)
-    cv::addWeighted( abs_grad_x, 0.5, abs_grad_y, 0.5, 0, grad );
+    cv::addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, grad);
 
-    //~ cv::imshow("Scharr", grad );
-    //~ cv::waitKey(0);
+    if (show_edges_image_)
+    {
+      cv::imshow("Source Map", src_blurred);
+      cv::imshow("Scharr", grad );
+      cv::imshow("abs_grad_x", abs_grad_x );
+      cv::imshow("abs_grad_y", abs_grad_y );
+      cv::waitKey(1);
+    }
 
     return grad;
   }
@@ -149,7 +167,10 @@ namespace pandora_slam
     dst.create(edges.size(), edges.type());
     dst = cv::Scalar::all(0);
     edges.copyTo(dst, edges);
-    //~ cv::imshow("Inflated image", dst);
-    //~ cv::waitKey(0);
-   }
+    if (show_inflation_image_)
+    {
+      cv::imshow("Inflated image", dst);
+      cv::waitKey(1);
+    }
+  }
 }  // namespace pandora_slam
