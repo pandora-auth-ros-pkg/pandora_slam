@@ -54,9 +54,9 @@ namespace pandora_slam
     {
       canny_low_threshold_ = canny_low_threshold;
     };
-    inline void setCannyRatio(int canny_ratio)
+    inline void setCannyHighThreshold(int canny_high_threshold)
     {
-      canny_ratio_ = canny_ratio;
+      canny_high_threshold_ = canny_high_threshold;
     };
     inline void setCannyKernelSize(int canny_kernel_size)
     {
@@ -99,7 +99,7 @@ namespace pandora_slam
     void inflateEdges(cv::Mat &edges, int inflation_size);
    private:
     int canny_low_threshold_;
-    int canny_ratio_;
+    int canny_high_threshold_;
     int canny_kernel_size_;
 
     int scharr_scale_;

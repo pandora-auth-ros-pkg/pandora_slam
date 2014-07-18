@@ -48,6 +48,8 @@
 #include "point_cloud_subsampler/edge_detector.h"
 #include <dynamic_reconfigure/server.h>
 #include <pandora_slam_3d/point_cloud_subsamplerConfig.h>
+#include <pcl/features/integral_image_normal.h>
+#include <pcl/common/point_tests.h>
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 typedef message_filters::sync_policies::ApproximateTime<
@@ -63,6 +65,9 @@ namespace pandora_slam
     void depthAndCloudCallback(
       const sensor_msgs::ImageConstPtr& depth_image,
       const sensor_msgs::PointCloud2ConstPtr& cloud_in);
+    cv::Mat preprocessDepth(const sensor_msgs::ImageConstPtr& depth_image);
+    cv::Mat preprocessPointCloud(PointCloud::Ptr input_cloud_ptr);
+    cv::Mat normalizeImage(cv::Mat image);
     void reconfigureCallback(pandora_slam_3d::point_cloud_subsamplerConfig &config,
       uint32_t level);
 
@@ -76,6 +81,8 @@ namespace pandora_slam
     EdgeDetector edge_detector_;
     int edge_detection_method_;
     int inflation_size_;
+    double normal_max_depth_change_factor_;
+    double normal_smoothing_size_;
     dynamic_reconfigure::Server<pandora_slam_3d::point_cloud_subsamplerConfig>
       reconfigure_server_;
   };
@@ -97,8 +104,11 @@ namespace pandora_slam
     cloud_publisher_ = node_handle_.advertise<PointCloud>(
       "/kinect/depth_registered/points/subsampled", 5);
 
-    edge_detection_method_ = EdgeDetector::SCHARR;
+    edge_detection_method_ = EdgeDetector::CANNY;
     inflation_size_ = 15;
+
+    normal_max_depth_change_factor_ = 0.02;
+    normal_smoothing_size_ = 10.0;
 
     dynamic_reconfigure::Server<pandora_slam_3d::point_cloud_subsamplerConfig>::CallbackType
       callback_type;
@@ -110,40 +120,114 @@ namespace pandora_slam
     const sensor_msgs::ImageConstPtr& depth_image,
     const sensor_msgs::PointCloud2ConstPtr& cloud_in)
   {
+    /// Create pcl Point Cloud from sensor_msgs::PointCloud2
+    PointCloud::Ptr input_cloud_ptr(new PointCloud);
+    pcl::fromROSMsg(*cloud_in, *input_cloud_ptr);
+
+    //~ cv::Mat edges = preprocessDepth(depth_image);
+    cv::Mat edges = preprocessPointCloud(input_cloud_ptr);
+
+    /// Create edge point cloud
+    PointCloud edgePointCloud;
+    PointCloud nonEdgePointCloud;
+    for (int ii = 0; ii < edges.cols * edges.rows; ii++)
+    {
+      if (pcl::isFinite(input_cloud_ptr->at(ii)))
+      {
+        if (edges.data[ii] == 255)
+        {
+          edgePointCloud.push_back(input_cloud_ptr->at(ii));
+        }
+        else
+        {
+          nonEdgePointCloud.push_back(input_cloud_ptr->at(ii));
+        }
+      }
+    }
+    edgePointCloud.header = input_cloud_ptr->header;
+    nonEdgePointCloud.header = input_cloud_ptr->header;
+    cloud_publisher_.publish(edgePointCloud);
+    cloud_publisher_.publish(nonEdgePointCloud);
+  }
+
+  cv::Mat PointCloudSubsampler::preprocessDepth(
+    const sensor_msgs::ImageConstPtr& depth_image)
+  {
     /// Convert sensor_msgs::Image to CvImage
     cv_bridge::CvImageConstPtr cv_depth_image_ptr =
       cv_bridge::toCvShare(depth_image, sensor_msgs::image_encodings::TYPE_32FC1);
 
     ///Scale image and change encoding
     cv::Mat image = cv_depth_image_ptr->image;
-    cv::Mat scaledImage;
-
-    double min, max;
-    cv::minMaxIdx(image, &min, &max);
-    scaledImage = (image - min) * 255 / (max - min);
-    scaledImage = cv::abs(scaledImage);
-    scaledImage.convertTo(scaledImage, CV_8UC1);
+    cv::Mat scaledImage = normalizeImage(image);;
 
     /// Detect edges
     cv::Mat edges = edge_detector_.detect(scaledImage, edge_detection_method_);
     /// Inflate edges
     edge_detector_.inflateEdges(edges, inflation_size_);
+    return edges;
+  }
 
-    /// Create pcl Point Cloud from sensor_msgs::PointCloud2
-    PointCloud inputCloud;
-    pcl::fromROSMsg(*cloud_in, inputCloud);
+  cv::Mat PointCloudSubsampler::preprocessPointCloud(
+    PointCloud::Ptr input_cloud_ptr)
+  {
+    // estimate normals
+    pcl::PointCloud<pcl::Normal>::Ptr
+      normalsPtr(new pcl::PointCloud<pcl::Normal>);
 
-    /// Create edge point cloud
-    PointCloud edgePointCloud;
-    for (int ii = 0; ii < edges.cols * edges.rows; ii++)
+    pcl::IntegralImageNormalEstimation<pcl::PointXYZ, pcl::Normal>
+      normalEstimator;
+    normalEstimator.setNormalEstimationMethod(
+      normalEstimator.COVARIANCE_MATRIX);
+    normalEstimator.setMaxDepthChangeFactor(normal_max_depth_change_factor_);
+    normalEstimator.setNormalSmoothingSize(normal_smoothing_size_);
+    normalEstimator.setInputCloud(input_cloud_ptr);
+    normalEstimator.compute(*normalsPtr);
+    
+    cv::Mat curvature_image;
+    curvature_image.create(
+      input_cloud_ptr->height, input_cloud_ptr->width, CV_32F);
+
+    for (int ii = 0; ii < curvature_image.cols * curvature_image.rows; ii++)
     {
-      if (edges.data[ii] == 255)
+      uint8_t* curvature_data;
+      if (pcl::isFinite(normalsPtr->points[ii]))
       {
-        edgePointCloud.push_back(inputCloud[ii]);
+        curvature_data = reinterpret_cast<uint8_t*>(
+          &(normalsPtr->points[ii].curvature));
+      }
+      else
+      {
+        curvature_data = new uint8_t[4];
+
+        for (int jj = 0; jj < 4; jj++)
+        {
+          curvature_data[jj] = 0;
+        }
+      }
+      for (int jj = 0; jj < 4; jj++)
+      {
+        curvature_image.data[ii * 4 + jj] = curvature_data[jj];
       }
     }
-    edgePointCloud.header = inputCloud.header;
-    cloud_publisher_.publish(edgePointCloud);
+    cv::Mat normalized_curvature_image = normalizeImage(curvature_image);
+    /// Detect edges
+    cv::Mat edges = edge_detector_.detect(
+      normalized_curvature_image, edge_detection_method_);
+    /// Inflate edges
+    edge_detector_.inflateEdges(edges, inflation_size_);
+    return edges;
+  }
+
+  cv::Mat PointCloudSubsampler::normalizeImage(cv::Mat image)
+  {
+    cv::Mat normalized_image;
+    double min, max;
+    cv::minMaxIdx(image, &min, &max);
+    normalized_image = (image - min) * 255 / (max - min);
+    normalized_image = cv::abs(normalized_image);
+    normalized_image.convertTo(normalized_image, CV_8UC1);
+    return normalized_image;
   }
 
   void PointCloudSubsampler::reconfigureCallback(
@@ -151,9 +235,11 @@ namespace pandora_slam
   {
     inflation_size_ = config.inflation_size;
     edge_detection_method_ = config.edge_detection_method;
+    normal_max_depth_change_factor_ = config.normal_max_depth_change_factor;
+    normal_smoothing_size_ = config.normal_smoothing_size;
     
     edge_detector_.setCannyLowThreshold(config.canny_low_threshold);
-    edge_detector_.setCannyRatio(config.canny_ratio);
+    edge_detector_.setCannyHighThreshold(config.canny_high_threshold);
 
     edge_detector_.setScharrScale(config.scharr_scale);
     edge_detector_.setScharrDelta(config.scharr_delta);

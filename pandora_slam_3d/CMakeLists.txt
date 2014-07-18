@@ -12,7 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   dynamic_reconfigure
 )
 
-set(CMAKE_BUILD_TYPE Debug)
+#~ set(CMAKE_BUILD_TYPE Debug)
 
 generate_dynamic_reconfigure_options(
   cfg/point_cloud_subsampler.cfg)

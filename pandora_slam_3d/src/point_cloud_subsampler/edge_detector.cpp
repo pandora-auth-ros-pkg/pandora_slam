@@ -41,7 +41,7 @@ namespace pandora_slam
   EdgeDetector::EdgeDetector()
   {
     canny_low_threshold_ = 10;
-    canny_ratio_ = 3;
+    canny_high_threshold_ = 30;
     canny_kernel_size_ = 3;
     
     scharr_scale_ = 1;
@@ -90,7 +90,7 @@ namespace pandora_slam
     }
     /// Canny detector
     cv::Canny(detected_edges, detected_edges, canny_low_threshold_,
-      canny_low_threshold_ * canny_ratio_, canny_kernel_size_ );
+     canny_high_threshold_, canny_kernel_size_ );
     /// Create a matrix of the same type and size as src (for dst)
     dst.create(src.size(), src.type());
     /// Using Canny's output as a mask, we display our result
