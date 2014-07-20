@@ -141,7 +141,8 @@ namespace pandora_slam
     return grad;
   }
   
-  void EdgeDetector::inflateEdges(cv::Mat &edges, int inflation_size)
+  void EdgeDetector::inflateEdges(boost::shared_ptr<cv::Mat> edges,
+    int inflation_size)
   {
     if (inflation_size < 3)
     {
@@ -153,22 +154,22 @@ namespace pandora_slam
     }
     cv::Mat dst;
     cv::boxFilter(
-      edges, edges, edges.type(), cv::Size(inflation_size, inflation_size),
+      *edges, *edges, edges->type(), cv::Size(inflation_size, inflation_size),
       cv::Point(-1, -1), false);
 
-    for (int ii = 0; ii < edges.cols * edges.rows; ii++)
+    for (int ii = 0; ii < edges->cols * edges->rows; ii++)
     {
-      if (edges.data[ii] != 0)
+      if (edges->data[ii] != 0)
       {
-        edges.data[ii] == 255;
+        edges->data[ii] == 255;
       }
     }
 
-    dst.create(edges.size(), edges.type());
-    dst = cv::Scalar::all(0);
-    edges.copyTo(dst, edges);
     if (show_inflation_image_)
     {
+    dst.create(edges->size(), edges->type());
+    dst = cv::Scalar::all(0);
+    edges->copyTo(dst, *edges);
       cv::imshow("Inflated image", dst);
       cv::waitKey(1);
     }

@@ -131,33 +131,31 @@ namespace pandora_slam
     PointCloud::Ptr input_cloud_ptr(new PointCloud);
     pcl::fromROSMsg(*cloud_in, *input_cloud_ptr);
 
-    //~ cv::Mat edges = preprocessDepth(depth_image);
-    //~ cv::Mat edges = preprocessPointCloud(input_cloud_ptr);
     boost::shared_ptr<cv::Mat> curvature_image(new cv::Mat);
     curvature_image->create(
       input_cloud_ptr->height, input_cloud_ptr->width, CV_32F);
     preprocessPointCloud(input_cloud_ptr, curvature_image);
 
-    //~ /// Create edge point cloud
-    //~ PointCloud edgePointCloud;
-    //~ PointCloud nonEdgePointCloud;
-    //~ for (int ii = 0; ii < edges.cols * edges.rows; ii++)
-    //~ {
-      //~ if (pcl::isFinite(input_cloud_ptr->at(ii)))
-      //~ {
-        //~ if (edges.data[ii] == 255)
-        //~ {
-          //~ edgePointCloud.push_back(input_cloud_ptr->at(ii));
-        //~ }
-        //~ else
-        //~ {
-          //~ nonEdgePointCloud.push_back(input_cloud_ptr->at(ii));
-        //~ }
-      //~ }
-    //~ }
-    //~ edgePointCloud.header = input_cloud_ptr->header;
-    //~ nonEdgePointCloud.header = input_cloud_ptr->header;
-    //~ cloud_publisher_.publish(edgePointCloud);
+    /// Create edge point cloud
+    PointCloud edgePointCloud;
+    PointCloud nonEdgePointCloud;
+    for (int ii = 0; ii < curvature_image->cols * curvature_image->rows; ii++)
+    {
+      if (pcl::isFinite(input_cloud_ptr->at(ii)))
+      {
+        if (curvature_image->data[ii] == 255)
+        {
+          edgePointCloud.push_back(input_cloud_ptr->at(ii));
+        }
+        else
+        {
+          nonEdgePointCloud.push_back(input_cloud_ptr->at(ii));
+        }
+      }
+    }
+    edgePointCloud.header = input_cloud_ptr->header;
+    nonEdgePointCloud.header = input_cloud_ptr->header;
+    cloud_publisher_.publish(edgePointCloud);
     //~ cloud_publisher_.publish(nonEdgePointCloud);
   }
 
@@ -200,13 +198,10 @@ namespace pandora_slam
     {
       uint8_t* curvature_data;
       if (pcl::isFinite(normalsPtr->points[ii]) &&
-        normalsPtr->points[ii].curvature >= curvature_threshold_)
+        normalsPtr->points[ii].curvature >= curvature_threshold_ &&
+        input_cloud_ptr->points[ii].getVector3fMap().norm() <=
+        curvature_distance_threshold_)
       {
-        //~ Eigen::Vector3f point;
-        //~ point[0] = input_cloud_ptr->points[ii].data[0];
-        //~ point[1] = input_cloud_ptr->points[ii].data[1];
-        //~ point[2] = input_cloud_ptr->points[ii].data[2];
-        //~ ROS_ERROR_STREAM(point.norm());
         curvature_data = reinterpret_cast<uint8_t*>(
           &(normalsPtr->points[ii].curvature));
         for (int jj = 0; jj < 4; jj++)
@@ -221,7 +216,6 @@ namespace pandora_slam
           curvature_image->data[ii * 4 + jj] = 0;
         }
       }
-
     }
     normalizeImage(curvature_image);
 
@@ -231,13 +225,8 @@ namespace pandora_slam
       cv::waitKey(1);
     }
 
-    /// Detect edges
-    //~ cv::Mat edges;
-    //~ cv::Mat edges = edge_detector_.detect(
-      //~ normalized_curvature_image, edge_detection_method_);
-    //~ /// Inflate edges
-    //~ edge_detector_.inflateEdges(edges, inflation_size_);
-    //~ return normalized_curvature_image;
+    /// Inflate edges
+    edge_detector_.inflateEdges(curvature_image, inflation_size_);
   }
 
   void PointCloudSubsampler::normalizeImage(boost::shared_ptr<cv::Mat> image)
