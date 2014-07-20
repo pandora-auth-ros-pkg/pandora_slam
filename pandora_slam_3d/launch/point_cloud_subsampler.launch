@@ -1,7 +1,7 @@
 <launch>
   <arg name="openni" default="true"/>
-  <arg name="kinect" default="true"/>
-  <arg name="xtion" default="false"/>
+  <arg name="kinect" default="false"/>
+  <arg name="xtion" default="true"/>
   <arg name="publish_tf" default="true"/>
 
   <include if="$(arg openni)" file="$(find pandora_slam_3d)/launch/openni.launch">
