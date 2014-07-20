@@ -86,6 +86,7 @@ namespace pandora_slam
     int inflation_size_;
     double dense_voxel_size_;
     double sparse_voxel_size_;
+    double sensor_cutoff_;
     double curvature_threshold_;
     double curvature_distance_threshold_;
     bool show_curvature_image_;
@@ -116,8 +117,9 @@ namespace pandora_slam
     inflation_size_ = 15;
     dense_voxel_size_ = 0.06;
     sparse_voxel_size_  = 0.12;
-    curvature_threshold_ = 0.7;
-    curvature_distance_threshold_ = 0.7;
+    sensor_cutoff_ = 3.0;
+    curvature_threshold_ = 0.06;
+    curvature_distance_threshold_ = 2.0;
     show_curvature_image_ = false;
 
     normal_max_depth_change_factor_ = 0.02;
@@ -147,7 +149,8 @@ namespace pandora_slam
     PointCloud::Ptr non_edge_cloud_ptr(new PointCloud);
     for (int ii = 0; ii < curvature_image_ptr->cols * curvature_image_ptr->rows; ii++)
     {
-      if (pcl::isFinite(input_cloud_ptr->at(ii)))
+      if (pcl::isFinite(input_cloud_ptr->at(ii)) &&
+        input_cloud_ptr->points[ii].getVector3fMap().norm() <= sensor_cutoff_)
       {
         if (curvature_image_ptr->data[ii] == 255)
         {
@@ -269,6 +272,7 @@ namespace pandora_slam
     inflation_size_ = config.inflation_size;
     dense_voxel_size_ = config.dense_voxel_size;
     sparse_voxel_size_ = config.sparse_voxel_size;
+    sensor_cutoff_ = config.sensor_cutoff;
     
     curvature_threshold_ = config.curvature_threshold;
     curvature_distance_threshold_ = config.curvature_distance_threshold;
