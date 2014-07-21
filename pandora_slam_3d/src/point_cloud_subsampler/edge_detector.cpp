@@ -43,7 +43,7 @@ namespace pandora_slam
     canny_low_threshold_ = 10;
     canny_high_threshold_ = 30;
     canny_kernel_size_ = 3;
-    
+
     scharr_scale_ = 1;
     scharr_delta_ = 0;
     scharr_ddepth_ = CV_16S;
@@ -75,14 +75,14 @@ namespace pandora_slam
       dst = cv::Scalar::all(0);
       return dst;
     }
-   }
+  }
 
   cv::Mat EdgeDetector::cannyEdges(const cv::Mat &src)
   {
     cv::Mat dst, detected_edges;
 
     /// Reduce noise with a kernel 3x3
-    cv::blur(src, detected_edges, cv::Size(3,3));
+    cv::blur(src, detected_edges, cv::Size(3, 3));
     if (show_edges_image_)
     {
       cv::imshow("Source Map", detected_edges);
@@ -90,7 +90,7 @@ namespace pandora_slam
     }
     /// Canny detector
     cv::Canny(detected_edges, detected_edges, canny_low_threshold_,
-     canny_high_threshold_, canny_kernel_size_ );
+      canny_high_threshold_, canny_kernel_size_);
     /// Create a matrix of the same type and size as src (for dst)
     dst.create(src.size(), src.type());
     /// Using Canny's output as a mask, we display our result
@@ -102,7 +102,6 @@ namespace pandora_slam
       cv::imshow("Edge Map", dst);
       cv::waitKey(1);
     }
-    
     return detected_edges;
   }
 
@@ -110,7 +109,7 @@ namespace pandora_slam
   {
     cv::Mat src_blurred;
     cv::Mat grad;
-    cv::GaussianBlur(src, src_blurred, cv::Size(3,3), 0, 0, cv::BORDER_DEFAULT);
+    cv::GaussianBlur(src, src_blurred, cv::Size(3, 3), 0, 0, cv::BORDER_DEFAULT);
 
     /// Generate grad_x and grad_y
     cv::Mat grad_x, grad_y;
@@ -132,15 +131,14 @@ namespace pandora_slam
     if (show_edges_image_)
     {
       cv::imshow("Source Map", src_blurred);
-      cv::imshow("Scharr", grad );
-      cv::imshow("abs_grad_x", abs_grad_x );
-      cv::imshow("abs_grad_y", abs_grad_y );
+      cv::imshow("Scharr", grad);
+      cv::imshow("abs_grad_x", abs_grad_x);
+      cv::imshow("abs_grad_y", abs_grad_y);
       cv::waitKey(1);
     }
-
     return grad;
   }
-  
+
   void EdgeDetector::inflateEdges(boost::shared_ptr<cv::Mat> edges,
     int inflation_size)
   {

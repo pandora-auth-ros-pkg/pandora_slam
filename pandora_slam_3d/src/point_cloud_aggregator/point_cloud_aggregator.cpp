@@ -59,8 +59,8 @@ namespace pandora_slam
 
   PointCloudAggregator::PointCloudAggregator()
   {
-    subscriber_ = node_handle_.subscribe("/laser/point_cloud",1,
-      &PointCloudAggregator::cloudCallback,this);
+    subscriber_ = node_handle_.subscribe("/laser/point_cloud", 1,
+      &PointCloudAggregator::cloudCallback, this);
 
     publisher_ = node_handle_.advertise<sensor_msgs::PointCloud2>(
       "/laser/aggregated_point_cloud", 5);
@@ -101,9 +101,9 @@ namespace pandora_slam
 }  // namespace pandora_slam
 
 
-int main (int argc, char **argv)
+int main(int argc, char **argv)
 {
-  ros::init(argc,argv,"point_cloud_aggregator");
+  ros::init(argc, argv, "point_cloud_aggregator");
   pandora_slam::PointCloudAggregator point_cloud_aggregator;
 
   ros::spin();

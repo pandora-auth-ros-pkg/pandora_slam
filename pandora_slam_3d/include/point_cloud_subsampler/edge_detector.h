@@ -34,6 +34,9 @@
 *
 * Author: Evangelos Apostolidis
 *********************************************************************/
+#ifndef POINT_CLOUD_SUBSAMPLER_EDGE_DETECTOR_H
+#define POINT_CLOUD_SUBSAMPLER_EDGE_DETECTOR_H
+
 #include "ros/ros.h"
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
@@ -83,7 +86,7 @@ namespace pandora_slam
     {
       scharr_ddepth_ = scharr_ddepth;
     };
-    
+
     inline void setShowEdgesImage(bool show_edges_image)
     {
       show_edges_image_ = show_edges_image;
@@ -92,7 +95,7 @@ namespace pandora_slam
     {
       show_inflation_image_ = show_inflation_image;
     };
-    
+
     cv::Mat detect(const cv::Mat &src, int method);
     cv::Mat cannyEdges(const cv::Mat &src);
     cv::Mat scharrDerivatives(const cv::Mat &src);
@@ -105,8 +108,9 @@ namespace pandora_slam
     int scharr_scale_;
     int scharr_delta_;
     int scharr_ddepth_;
-    
+
     bool show_edges_image_;
     bool show_inflation_image_;
   };
 }  // namespace pandora_slam
+#endif  // POINT_CLOUD_SUBSAMPLER_EDGE_DETECTOR_H

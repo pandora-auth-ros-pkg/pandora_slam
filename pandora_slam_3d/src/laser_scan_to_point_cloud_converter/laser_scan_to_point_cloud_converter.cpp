@@ -53,8 +53,8 @@ namespace pandora_slam
 
   LaserScanToPointCloudConverter::LaserScanToPointCloudConverter()
   {
-    subscriber_ = node_handle_.subscribe("/laser/scan",1,
-      &LaserScanToPointCloudConverter::scanCallback,this);
+    subscriber_ = node_handle_.subscribe("/laser/scan", 1,
+      &LaserScanToPointCloudConverter::scanCallback, this);
 
     publisher_ = node_handle_.advertise<sensor_msgs::PointCloud2>(
       "/laser/point_cloud", 5);
@@ -70,9 +70,9 @@ namespace pandora_slam
   }
 }  // namespace pandora_slam
 
-int main (int argc, char **argv)
+int main(int argc, char **argv)
 {
-  ros::init(argc,argv,"laser_scan_to_point_cloud_converter");
+  ros::init(argc, argv, "laser_scan_to_point_cloud_converter");
   pandora_slam::LaserScanToPointCloudConverter
     laserScanToPointCloudConverter;
 

@@ -10,6 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   octomap_server
   cv_bridge
   dynamic_reconfigure
+  roslint
 )
 
 #~ set(CMAKE_BUILD_TYPE Debug)
@@ -65,3 +66,15 @@ target_link_libraries(
   point_cloud_subsampler
   edge_detector
   ${catkin_LIBRARIES})
+
+# To check lint : catkin_make roslint_pandora_slam_3d
+set(ROSLINT_CPP_OPTS
+  "--filter=-build/include_what_you_use, -whitespace/comments, -runtime/references, -runtime/arrays, -whitespace/empty_loop_body")
+
+FILE(GLOB_RECURSE ${PROJECT_NAME}_LINT_SRCS
+  RELATIVE ${PROJECT_SOURCE_DIR}
+
+  *.h
+  *.cpp
+)
+roslint_cpp(${${PROJECT_NAME}_LINT_SRCS})
