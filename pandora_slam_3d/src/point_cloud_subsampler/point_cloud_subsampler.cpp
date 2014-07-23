@@ -56,7 +56,7 @@ namespace pandora_slam
       "/kinect/depth_registered/points/subsampled", 5);
 
     edge_detection_method_ = EdgeDetector::CANNY;
-    inflation_size_ = 15;
+    inflation_kernel_size_ = 15;
     dense_voxel_size_ = 0.06;
     sparse_voxel_size_  = 0.12;
     sensor_cutoff_ = 3.0;
@@ -77,15 +77,20 @@ namespace pandora_slam
     const sensor_msgs::ImageConstPtr& depth_image,
     const sensor_msgs::PointCloud2ConstPtr& cloud_in)
   {
+    Timer::start("depthAndCloudCallback", "", true);
+    Timer::start("fromROSMsg", "depthAndCloudCallback", false);
     /// Create pcl Point Cloud from sensor_msgs::PointCloud2
     PointCloud::Ptr input_cloud_ptr(new PointCloud);
     pcl::fromROSMsg(*cloud_in, *input_cloud_ptr);
+
+    Timer::tick("fromROSMsg");
 
     boost::shared_ptr<cv::Mat> curvature_image_ptr(new cv::Mat);
     curvature_image_ptr->create(
       input_cloud_ptr->height, input_cloud_ptr->width, CV_32F);
     preprocessPointCloud(input_cloud_ptr, curvature_image_ptr);
 
+    Timer::start("voxel_grid", "depthAndCloudCallback", false);
     /// Create edge point cloud
     PointCloud::Ptr edge_cloud_ptr(new PointCloud);
     PointCloud::Ptr non_edge_cloud_ptr(new PointCloud);
@@ -104,6 +109,7 @@ namespace pandora_slam
         }
       }
     }
+
     edge_cloud_ptr->header = input_cloud_ptr->header;
     non_edge_cloud_ptr->header = input_cloud_ptr->header;
     subsampleCloud(edge_cloud_ptr, dense_voxel_size_);
@@ -113,6 +119,9 @@ namespace pandora_slam
     subsampled_cloud = *edge_cloud_ptr + *non_edge_cloud_ptr;
     subsampled_cloud.header = input_cloud_ptr->header;
     cloud_publisher_.publish(subsampled_cloud);
+    Timer::tick("voxel_grid");
+    Timer::tick("depthAndCloudCallback");
+    Timer::printAllMeansTree();
   }
 
   //~ cv::Mat PointCloudSubsampler::preprocessDepth(
@@ -129,7 +138,7 @@ namespace pandora_slam
     //~ /// Detect edges
     //~ cv::Mat edges = edge_detector_.detect(image, edge_detection_method_);
     //~ /// Inflate edges
-    //~ edge_detector_.inflateEdges(edges, inflation_size_);
+    //~ edge_detector_.inflateEdges(edges, inflation_kernel_size_);
     //~ return edges;
   //~ }
 
@@ -137,6 +146,8 @@ namespace pandora_slam
     PointCloud::Ptr input_cloud_ptr,
     boost::shared_ptr<cv::Mat> curvature_image_ptr)
   {
+    Timer::start("preprocessPointCloud", "depthAndCloudCallback", false);
+    Timer::start("IntegralImageNormalEstimation", "preprocessPointCloud", false);
     // estimate normals
     pcl::PointCloud<pcl::Normal>::Ptr
       normalsPtr(new pcl::PointCloud<pcl::Normal>);
@@ -152,11 +163,13 @@ namespace pandora_slam
 
     for (int ii = 0; ii < curvature_image_ptr->cols * curvature_image_ptr->rows; ii++)
     {
+      float curvature, distance;
+      curvature = normalsPtr->points[ii].curvature;
+      distance = input_cloud_ptr->points[ii].getVector3fMap().norm();
       uint8_t* curvature_data;
       if (pcl::isFinite(normalsPtr->points[ii]) &&
-        normalsPtr->points[ii].curvature >= curvature_threshold_ &&
-        input_cloud_ptr->points[ii].getVector3fMap().norm() <=
-        curvature_distance_threshold_)
+        curvature >= curvature_threshold_ &&
+        distance <= curvature_distance_threshold_)
       {
         curvature_data = reinterpret_cast<uint8_t*>(
           &(normalsPtr->points[ii].curvature));
@@ -173,16 +186,20 @@ namespace pandora_slam
         }
       }
     }
-    normalizeImage(curvature_image_ptr);
 
+    normalizeImage(curvature_image_ptr);
     if (show_curvature_image_)
     {
       cv::imshow("Curvature", *curvature_image_ptr);
       cv::waitKey(1);
     }
 
+    Timer::tick("IntegralImageNormalEstimation");
+    Timer::start("inflation", "preprocessPointCloud", false);
     /// Inflate edges
-    edge_detector_.inflateEdges(curvature_image_ptr, inflation_size_);
+    edge_detector_.inflateEdges(curvature_image_ptr, inflation_kernel_size_);
+    Timer::tick("inflation");
+    Timer::tick("preprocessPointCloud");
   }
 
   void PointCloudSubsampler::normalizeImage(
@@ -211,7 +228,7 @@ namespace pandora_slam
   void PointCloudSubsampler::reconfigureCallback(
     pandora_slam_3d::point_cloud_subsamplerConfig &config, uint32_t level)
   {
-    inflation_size_ = config.inflation_size;
+    inflation_kernel_size_ = 1 + 2 * config.inflation_size;
     dense_voxel_size_ = config.dense_voxel_size;
     sparse_voxel_size_ = config.sparse_voxel_size;
     sensor_cutoff_ = config.sensor_cutoff;

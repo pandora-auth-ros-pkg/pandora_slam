@@ -54,6 +54,7 @@
 #include <pcl/common/point_tests.h>
 #include <pcl/filters/voxel_grid.h>
 #include "point_cloud_subsampler/edge_detector.h"
+#include "utils/timer.h"
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 typedef message_filters::sync_policies::ApproximateTime<
@@ -86,7 +87,7 @@ namespace pandora_slam
 
     EdgeDetector edge_detector_;
     int edge_detection_method_;
-    int inflation_size_;
+    int inflation_kernel_size_;
     double dense_voxel_size_;
     double sparse_voxel_size_;
     double sensor_cutoff_;

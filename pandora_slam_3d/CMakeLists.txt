@@ -11,8 +11,10 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   dynamic_reconfigure
   roslint
+  pandora_vision_hole_detector
 )
 
+set(CMAKE_BUILD_TYPE Release)
 #~ set(CMAKE_BUILD_TYPE Debug)
 
 generate_dynamic_reconfigure_options(
@@ -65,6 +67,7 @@ add_dependencies(
 target_link_libraries(
   point_cloud_subsampler
   edge_detector
+  utils_lib
   ${catkin_LIBRARIES})
 
 # To check lint : catkin_make roslint_pandora_slam_3d
