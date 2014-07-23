@@ -59,6 +59,7 @@
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 typedef message_filters::sync_policies::ApproximateTime<
   sensor_msgs::Image, sensor_msgs::PointCloud2> SyncPolicy;
+typedef pandora_slam_3d::point_cloud_subsamplerConfig subsamplerConfig;
 
 namespace pandora_slam
 {
@@ -72,27 +73,36 @@ namespace pandora_slam
       const sensor_msgs::PointCloud2ConstPtr& cloud_in);
     //~ cv::Mat preprocessDepth(const sensor_msgs::ImageConstPtr& depth_image);
     void preprocessPointCloud(PointCloud::Ptr input_cloud_ptr,
-      boost::shared_ptr<cv::Mat> curvature_image_ptr);
+      cv::Mat* curvature_image_ptr);
     void subsampleCloud(PointCloud::Ptr input_cloud_ptr, double voxel_size);
-    void normalizeImage(boost::shared_ptr<cv::Mat> image_ptr);
-    void reconfigureCallback(pandora_slam_3d::point_cloud_subsamplerConfig &config,
+    void estimateCurvature(PointCloud::Ptr input_cloud_ptr,
+      cv::Mat* curvature_image_ptr);
+    void removeNoise(cv::Mat* curvature_image_ptr);
+    void normalizeImage(cv::Mat* image_ptr);
+    void reconfigureCallback(
+      pandora_slam_3d::point_cloud_subsamplerConfig &config,
       uint32_t level);
 
     ros::NodeHandle node_handle_;
     ros::Publisher cloud_publisher_;
 
-    message_filters::Subscriber<sensor_msgs::Image> *depth_image_subscriber_ptr_;
-    message_filters::Subscriber<sensor_msgs::PointCloud2> *cloud_subscriber_ptr_;
+    message_filters::Subscriber<sensor_msgs::Image>
+      *depth_image_subscriber_ptr_;
+    message_filters::Subscriber<sensor_msgs::PointCloud2>
+      *cloud_subscriber_ptr_;
     message_filters::Synchronizer<SyncPolicy> *synchronizer_ptr_;
 
     EdgeDetector edge_detector_;
     int edge_detection_method_;
     int inflation_kernel_size_;
+    int blur_kernel_size_;
+    int neighbours_threshold_;
     double dense_voxel_size_;
     double sparse_voxel_size_;
     double sensor_cutoff_;
     double curvature_threshold_;
-    double curvature_distance_threshold_;
+    double curvature_min_distance_threshold_;
+    double curvature_max_distance_threshold_;
     bool show_curvature_image_;
     double normal_max_depth_change_factor_;
     double normal_smoothing_size_;

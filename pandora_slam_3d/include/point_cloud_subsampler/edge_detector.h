@@ -99,7 +99,7 @@ namespace pandora_slam
     cv::Mat detect(const cv::Mat &src, int method);
     cv::Mat cannyEdges(const cv::Mat &src);
     cv::Mat scharrDerivatives(const cv::Mat &src);
-    void inflateEdges(boost::shared_ptr<cv::Mat> edges, int inflation_size);
+    void inflateEdges(cv::Mat* edges, int inflation_size);
    private:
     int canny_low_threshold_;
     int canny_high_threshold_;

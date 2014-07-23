@@ -139,8 +139,7 @@ namespace pandora_slam
     return grad;
   }
 
-  void EdgeDetector::inflateEdges(boost::shared_ptr<cv::Mat> edges,
-    int inflation_size)
+  void EdgeDetector::inflateEdges(cv::Mat* edges, int inflation_size)
   {
     if (inflation_size < 3)
     {

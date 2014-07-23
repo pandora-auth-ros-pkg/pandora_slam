@@ -57,19 +57,23 @@ namespace pandora_slam
 
     edge_detection_method_ = EdgeDetector::CANNY;
     inflation_kernel_size_ = 15;
+    blur_kernel_size_ = 7;
+    neighbours_threshold_ = 30;
     dense_voxel_size_ = 0.06;
     sparse_voxel_size_  = 0.12;
     sensor_cutoff_ = 3.0;
     curvature_threshold_ = 0.06;
-    curvature_distance_threshold_ = 2.0;
+    curvature_min_distance_threshold_ = 0.65;
+    curvature_max_distance_threshold_ = 2.0;
     show_curvature_image_ = false;
 
     normal_max_depth_change_factor_ = 0.02;
     normal_smoothing_size_ = 10.0;
 
-    dynamic_reconfigure::Server<pandora_slam_3d::point_cloud_subsamplerConfig>::CallbackType
+    dynamic_reconfigure::Server<subsamplerConfig>::CallbackType
       callback_type;
-    callback_type = boost::bind(&PointCloudSubsampler::reconfigureCallback, this, _1, _2);
+    callback_type = boost::bind(&PointCloudSubsampler::reconfigureCallback,
+      this, _1, _2);
     reconfigure_server_.setCallback(callback_type);
   }
 
@@ -85,7 +89,7 @@ namespace pandora_slam
 
     Timer::tick("fromROSMsg");
 
-    boost::shared_ptr<cv::Mat> curvature_image_ptr(new cv::Mat);
+    cv::Mat* curvature_image_ptr(new cv::Mat);
     curvature_image_ptr->create(
       input_cloud_ptr->height, input_cloud_ptr->width, CV_32F);
     preprocessPointCloud(input_cloud_ptr, curvature_image_ptr);
@@ -94,7 +98,8 @@ namespace pandora_slam
     /// Create edge point cloud
     PointCloud::Ptr edge_cloud_ptr(new PointCloud);
     PointCloud::Ptr non_edge_cloud_ptr(new PointCloud);
-    for (int ii = 0; ii < curvature_image_ptr->cols * curvature_image_ptr->rows; ii++)
+    for (int ii = 0; ii < curvature_image_ptr->cols *
+      curvature_image_ptr->rows; ii++)
     {
       if (pcl::isFinite(input_cloud_ptr->at(ii)) &&
         input_cloud_ptr->points[ii].getVector3fMap().norm() <= sensor_cutoff_)
@@ -122,6 +127,7 @@ namespace pandora_slam
     Timer::tick("voxel_grid");
     Timer::tick("depthAndCloudCallback");
     Timer::printAllMeansTree();
+    delete curvature_image_ptr;
   }
 
   //~ cv::Mat PointCloudSubsampler::preprocessDepth(
@@ -129,7 +135,8 @@ namespace pandora_slam
   //~ {
     //~ /// Convert sensor_msgs::Image to CvImage
     //~ cv_bridge::CvImageConstPtr cv_depth_image_ptr =
-      //~ cv_bridge::toCvShare(depth_image, sensor_msgs::image_encodings::TYPE_32FC1);
+      //~ cv_bridge::toCvShare(depth_image,
+      //~ sensor_msgs::image_encodings::TYPE_32FC1);
 //~
     //~ ///Scale image and change encoding
     //~ cv::Mat image = cv_depth_image_ptr->image;
@@ -143,15 +150,30 @@ namespace pandora_slam
   //~ }
 
   void PointCloudSubsampler::preprocessPointCloud(
-    PointCloud::Ptr input_cloud_ptr,
-    boost::shared_ptr<cv::Mat> curvature_image_ptr)
+    PointCloud::Ptr input_cloud_ptr, cv::Mat* curvature_image_ptr)
   {
     Timer::start("preprocessPointCloud", "depthAndCloudCallback", false);
-    Timer::start("IntegralImageNormalEstimation", "preprocessPointCloud", false);
     // estimate normals
+    estimateCurvature(input_cloud_ptr, curvature_image_ptr);
+
+    removeNoise(curvature_image_ptr);
+
+    if (show_curvature_image_)
+    {
+      cv::imshow("Curvature", *curvature_image_ptr);
+      cv::waitKey(1);
+    }
+
+    /// Inflate edges
+    edge_detector_.inflateEdges(curvature_image_ptr, inflation_kernel_size_);
+    Timer::tick("preprocessPointCloud");
+  }
+
+  void PointCloudSubsampler::estimateCurvature(
+    PointCloud::Ptr input_cloud_ptr, cv::Mat* curvature_image_ptr)
+  {
     pcl::PointCloud<pcl::Normal>::Ptr
       normalsPtr(new pcl::PointCloud<pcl::Normal>);
-
     pcl::IntegralImageNormalEstimation<pcl::PointXYZ, pcl::Normal>
       normalEstimator;
     normalEstimator.setNormalEstimationMethod(
@@ -161,7 +183,8 @@ namespace pandora_slam
     normalEstimator.setInputCloud(input_cloud_ptr);
     normalEstimator.compute(*normalsPtr);
 
-    for (int ii = 0; ii < curvature_image_ptr->cols * curvature_image_ptr->rows; ii++)
+    for (int ii = 0; ii < curvature_image_ptr->cols *
+      curvature_image_ptr->rows; ii++)
     {
       float curvature, distance;
       curvature = normalsPtr->points[ii].curvature;
@@ -169,7 +192,8 @@ namespace pandora_slam
       uint8_t* curvature_data;
       if (pcl::isFinite(normalsPtr->points[ii]) &&
         curvature >= curvature_threshold_ &&
-        distance <= curvature_distance_threshold_)
+        distance <= curvature_max_distance_threshold_ &&
+        distance >= curvature_min_distance_threshold_)
       {
         curvature_data = reinterpret_cast<uint8_t*>(
           &(normalsPtr->points[ii].curvature));
@@ -186,24 +210,34 @@ namespace pandora_slam
         }
       }
     }
-
     normalizeImage(curvature_image_ptr);
-    if (show_curvature_image_)
-    {
-      cv::imshow("Curvature", *curvature_image_ptr);
-      cv::waitKey(1);
-    }
-
-    Timer::tick("IntegralImageNormalEstimation");
-    Timer::start("inflation", "preprocessPointCloud", false);
-    /// Inflate edges
-    edge_detector_.inflateEdges(curvature_image_ptr, inflation_kernel_size_);
-    Timer::tick("inflation");
-    Timer::tick("preprocessPointCloud");
   }
 
-  void PointCloudSubsampler::normalizeImage(
-    boost::shared_ptr<cv::Mat> image_ptr)
+  void PointCloudSubsampler::removeNoise(cv::Mat* curvature_image_ptr)
+  {
+    cv::threshold(*curvature_image_ptr, *curvature_image_ptr, 1, 255,
+      cv::THRESH_BINARY);
+    cv::Mat blured_curvature = curvature_image_ptr->clone();
+    cv::blur(*curvature_image_ptr, blured_curvature, cv::Size(
+      blur_kernel_size_, blur_kernel_size_), cv::Point(-1, -1));
+    for (int ii = 0; ii < curvature_image_ptr->cols *
+      curvature_image_ptr->rows; ii++)
+    {
+      float neighbours = static_cast<float>(blured_curvature.data[ii])
+        / static_cast<float>(255) * blur_kernel_size_ * blur_kernel_size_;
+      if (neighbours < neighbours_threshold_ ||
+        curvature_image_ptr->data[ii] != 255)
+      {
+        curvature_image_ptr->data[ii] = 0;
+      }
+      else
+      {
+        curvature_image_ptr->data[ii] = 255;
+      }
+    }
+  }
+
+  void PointCloudSubsampler::normalizeImage(cv::Mat* image_ptr)
   {
     double min, max;
     cv::minMaxIdx(*image_ptr, &min, &max);
@@ -229,12 +263,15 @@ namespace pandora_slam
     pandora_slam_3d::point_cloud_subsamplerConfig &config, uint32_t level)
   {
     inflation_kernel_size_ = 1 + 2 * config.inflation_size;
+    blur_kernel_size_ = 1 + 2 * config.blur_size;
+    neighbours_threshold_ = config.neighbours_threshold;
     dense_voxel_size_ = config.dense_voxel_size;
     sparse_voxel_size_ = config.sparse_voxel_size;
     sensor_cutoff_ = config.sensor_cutoff;
 
     curvature_threshold_ = config.curvature_threshold;
-    curvature_distance_threshold_ = config.curvature_distance_threshold;
+    curvature_min_distance_threshold_ = config.curvature_min_distance_threshold;
+    curvature_max_distance_threshold_ = config.curvature_max_distance_threshold;
     show_curvature_image_ = config.show_curvature_image;
 
     edge_detection_method_ = config.edge_detection_method;
