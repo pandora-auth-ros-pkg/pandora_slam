@@ -48,14 +48,6 @@ target_link_libraries(
   point_cloud_aggregator
   ${catkin_LIBRARIES})
 
-add_library(
-  edge_detector
-  src/point_cloud_subsampler/edge_detector.cpp)
-
-target_link_libraries(
-  edge_detector
-  ${catkin_LIBRARIES})
-  
 add_executable(
   point_cloud_subsampler
   src/point_cloud_subsampler/point_cloud_subsampler.cpp)
@@ -66,7 +58,6 @@ add_dependencies(
 
 target_link_libraries(
   point_cloud_subsampler
-  edge_detector
   utils_lib
   ${catkin_LIBRARIES})
 

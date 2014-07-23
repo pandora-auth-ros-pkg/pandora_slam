@@ -38,9 +38,6 @@
 #define POINT_CLOUD_SUBSAMPLER_POINT_CLOUD_SUBSAMPLER_H
 
 #include "ros/ros.h"
-#include <message_filters/subscriber.h>
-#include <message_filters/synchronizer.h>
-#include <message_filters/sync_policies/approximate_time.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/image_encodings.h>
 #include <sensor_msgs/PointCloud2.h>
@@ -53,12 +50,9 @@
 #include <pcl/features/integral_image_normal.h>
 #include <pcl/common/point_tests.h>
 #include <pcl/filters/voxel_grid.h>
-#include "point_cloud_subsampler/edge_detector.h"
 #include "utils/timer.h"
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
-typedef message_filters::sync_policies::ApproximateTime<
-  sensor_msgs::Image, sensor_msgs::PointCloud2> SyncPolicy;
 typedef pandora_slam_3d::point_cloud_subsamplerConfig subsamplerConfig;
 
 namespace pandora_slam
@@ -68,32 +62,23 @@ namespace pandora_slam
    public:
     PointCloudSubsampler();
    private:
-    void depthAndCloudCallback(
-      const sensor_msgs::ImageConstPtr& depth_image,
-      const sensor_msgs::PointCloud2ConstPtr& cloud_in);
-    //~ cv::Mat preprocessDepth(const sensor_msgs::ImageConstPtr& depth_image);
-    void preprocessPointCloud(PointCloud::Ptr input_cloud_ptr,
-      cv::Mat* curvature_image_ptr);
-    void subsampleCloud(PointCloud::Ptr input_cloud_ptr, double voxel_size);
-    void estimateCurvature(PointCloud::Ptr input_cloud_ptr,
+    void pointCloudCallback(const PointCloud::ConstPtr& input_cloud_ptr);
+    void estimateCurvature(const PointCloud::ConstPtr& input_cloud_ptr,
       cv::Mat* curvature_image_ptr);
     void removeNoise(cv::Mat* curvature_image_ptr);
     void normalizeImage(cv::Mat* image_ptr);
+    void inflateEdges(cv::Mat* edges);
+    void voxelFilter(PointCloud::Ptr input_cloud_ptr, double voxel_size);
+    void subsampleCloud(const PointCloud::ConstPtr& input_cloud_ptr,
+      cv::Mat* curvature_image_ptr, PointCloud::Ptr subsampled_cloud);
     void reconfigureCallback(
       pandora_slam_3d::point_cloud_subsamplerConfig &config,
       uint32_t level);
 
     ros::NodeHandle node_handle_;
     ros::Publisher cloud_publisher_;
+    ros::Subscriber cloud_subscriber_;
 
-    message_filters::Subscriber<sensor_msgs::Image>
-      *depth_image_subscriber_ptr_;
-    message_filters::Subscriber<sensor_msgs::PointCloud2>
-      *cloud_subscriber_ptr_;
-    message_filters::Synchronizer<SyncPolicy> *synchronizer_ptr_;
-
-    EdgeDetector edge_detector_;
-    int edge_detection_method_;
     int inflation_kernel_size_;
     int blur_kernel_size_;
     int neighbours_threshold_;
@@ -104,6 +89,7 @@ namespace pandora_slam
     double curvature_min_distance_threshold_;
     double curvature_max_distance_threshold_;
     bool show_curvature_image_;
+    bool show_inflation_image_;
     double normal_max_depth_change_factor_;
     double normal_smoothing_size_;
     dynamic_reconfigure::Server<pandora_slam_3d::point_cloud_subsamplerConfig>
