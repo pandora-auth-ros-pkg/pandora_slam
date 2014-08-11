@@ -61,6 +61,14 @@ target_link_libraries(
   utils_lib
   ${catkin_LIBRARIES})
 
+add_executable(
+  matching_octomap_server
+  src/matching_octomap_server/matching_octomap_server.cpp)
+
+target_link_libraries(
+  matching_octomap_server
+  ${catkin_LIBRARIES})
+
 # To check lint : catkin_make roslint_pandora_slam_3d
 set(ROSLINT_CPP_OPTS
   "--filter=-build/include_what_you_use, -whitespace/comments, -runtime/references, -runtime/arrays, -whitespace/empty_loop_body")
