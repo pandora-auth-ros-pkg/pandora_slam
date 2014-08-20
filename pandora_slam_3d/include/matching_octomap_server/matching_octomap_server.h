@@ -38,12 +38,7 @@
 #define MATCHING_OCTOMAP_SERVER_MATCHING_OCTOMAP_SERVER_H
 
 #include "octomap_server/OctomapServer.h"
-#include <message_filters/subscriber.h>
-#include <message_filters/synchronizer.h>
-#include <message_filters/sync_policies/exact_time.h>
-
-typedef message_filters::sync_policies::ExactTime<sensor_msgs::PointCloud2,
-  sensor_msgs::PointCloud2> PCSyncPolicy;
+#include "utils/timer.h"
 
 namespace pandora_slam
 {
@@ -53,14 +48,10 @@ namespace pandora_slam
     MatchingOctomapServer();
     ~MatchingOctomapServer();
    private:
-    void matchCloudCallback(const sensor_msgs::PointCloud2::ConstPtr& cloud,
+    void matchCloudCallback(
       const sensor_msgs::PointCloud2::ConstPtr& subsampled_cloud);
 
-    message_filters::Subscriber<sensor_msgs::PointCloud2>*
-      point_cloud_subscriber_;
-    message_filters::Subscriber<sensor_msgs::PointCloud2>*
-      subsampled_cloud_subscriber_;
-    message_filters::Synchronizer<PCSyncPolicy>* synchronizer_;
+    ros::Subscriber subsampled_cloud_subscriber_;
   };
 }  // namespace pandora_slam
 

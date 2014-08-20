@@ -39,18 +39,9 @@ namespace pandora_slam
 {
   MatchingOctomapServer::MatchingOctomapServer()
   {
-    point_cloud_subscriber_ =
-      new message_filters::Subscriber<sensor_msgs::PointCloud2>(
-      m_nh, "/kinect/depth_registered/points", 1);
-    subsampled_cloud_subscriber_=
-      new message_filters::Subscriber<sensor_msgs::PointCloud2>(
-      m_nh, "/kinect/depth_registered/points/subsampled", 1);
-
-    synchronizer_ = new message_filters::Synchronizer<PCSyncPolicy>(
-      PCSyncPolicy(10), *point_cloud_subscriber_,
-      *subsampled_cloud_subscriber_);
-    synchronizer_->registerCallback(boost::bind(
-      &MatchingOctomapServer::matchCloudCallback, this, _1, _2));
+    subsampled_cloud_subscriber_ = m_nh.subscribe(
+      "/kinect/depth_registered/points", 1,
+      &MatchingOctomapServer::matchCloudCallback, this);
   }
 
   MatchingOctomapServer::~MatchingOctomapServer()
@@ -58,20 +49,20 @@ namespace pandora_slam
   }
 
   void MatchingOctomapServer::matchCloudCallback(
-    const sensor_msgs::PointCloud2::ConstPtr& cloud,
     const sensor_msgs::PointCloud2::ConstPtr& subsampled_cloud)
   {
-    ros::WallTime startTime = ros::WallTime::now();
+    Timer::start("matchCloudCallback", "", true);
+    Timer::start("computeFitness", "matchCloudCallback", false);
 
-    // ground filtering in base frame
-    PCLPointCloud pc; // input cloud for filtering and ground-detection
-    pcl::fromROSMsg(*cloud, pc);
+    PCLPointCloud subsampled_pc; // input cloud for matching
+    pcl::fromROSMsg(*subsampled_cloud, subsampled_pc);
 
     tf::StampedTransform sensorToWorldTf;
     try
     {
-      m_tfListener.lookupTransform(m_worldFrameId, cloud->header.frame_id,
-        cloud->header.stamp, sensorToWorldTf);
+      m_tfListener.lookupTransform(m_worldFrameId,
+        subsampled_cloud->header.frame_id,
+        subsampled_cloud->header.stamp, sensorToWorldTf);
     }
     catch (tf::TransformException& ex)
     {
@@ -82,69 +73,29 @@ namespace pandora_slam
 
     Eigen::Matrix4f sensorToWorld;
     pcl_ros::transformAsMatrix(sensorToWorldTf, sensorToWorld);
+    pcl::transformPointCloud(subsampled_pc, subsampled_pc, sensorToWorld);
 
-    // set up filter for height range, also removes NANs:
-    pcl::PassThrough<pcl::PointXYZ> pass;
-    pass.setFilterFieldName("z");
-    pass.setFilterLimits(m_pointcloudMinZ, m_pointcloudMaxZ);
-
-    PCLPointCloud pc_ground; // segmented ground plane
-    PCLPointCloud pc_nonground; // everything else
-
-    if (m_filterGroundPlane)
+    int points_size = subsampled_pc.width * subsampled_pc.height;
+    double fitness = 0;
+    for (int ii = 0; ii < points_size; ii++)
     {
-      tf::StampedTransform sensorToBaseTf, baseToWorldTf;
-      try
+      if (pcl::isFinite(subsampled_pc.points[ii]))
       {
-        m_tfListener.waitForTransform(m_baseFrameId, cloud->header.frame_id,
-          cloud->header.stamp, ros::Duration(0.2));
-        m_tfListener.lookupTransform(m_baseFrameId, cloud->header.frame_id,
-          cloud->header.stamp, sensorToBaseTf);
-        m_tfListener.lookupTransform(m_worldFrameId, m_baseFrameId,
-          cloud->header.stamp, baseToWorldTf);
+        octomap::OcTreeNode* node_ptr;
+        node_ptr = m_octree->search(subsampled_pc.points[ii].x,
+          subsampled_pc.points[ii].y, subsampled_pc.points[ii].z);
+        if (node_ptr != NULL)
+        {
+          fitness += node_ptr->getOccupancy();
+        }
       }
-      catch(tf::TransformException& ex)
-      {
-        ROS_ERROR_STREAM("Transform error for ground plane filter: " <<
-          ex.what() << ", quitting callback.\n" << "You need to set " <<
-          "the base_frame_id or disable filter_ground.");
-      }
-
-      Eigen::Matrix4f sensorToBase, baseToWorld;
-      pcl_ros::transformAsMatrix(sensorToBaseTf, sensorToBase);
-      pcl_ros::transformAsMatrix(baseToWorldTf, baseToWorld);
-
-      // transform pointcloud from sensor frame to fixed robot frame
-      pcl::transformPointCloud(pc, pc, sensorToBase);
-      pass.setInputCloud(pc.makeShared());
-      pass.filter(pc);
-      filterGroundPlane(pc, pc_ground, pc_nonground);
-
-      // transform clouds to world frame for insertion
-      pcl::transformPointCloud(pc_ground, pc_ground, baseToWorld);
-      pcl::transformPointCloud(pc_nonground, pc_nonground, baseToWorld);
     }
-    else
-    {
-      // directly transform to map frame:
-      pcl::transformPointCloud(pc, pc, sensorToWorld);
+    fitness = fitness / points_size;
+    ROS_INFO_STREAM("Fitness: " << fitness);
 
-      // just filter height range:
-      pass.setInputCloud(pc.makeShared());
-      pass.filter(pc);
-
-      pc_nonground = pc;
-      // pc_nonground is empty without ground segmentation
-      pc_ground.header = pc.header;
-      pc_nonground.header = pc.header;
-    }
-    insertScan(sensorToWorldTf.getOrigin(), pc_ground, pc_nonground);
-
-    double total_elapsed = (ros::WallTime::now() - startTime).toSec();
-    ROS_DEBUG_STREAM("Pointcloud insertion in OctomapServer done (" <<
-      pc_ground.size() << "+" << pc_nonground.size() << " pts " <<
-      "(ground/nonground), " << total_elapsed <<" sec)");
-    publishAll(cloud->header.stamp);
+    Timer::tick("computeFitness");
+    Timer::tick("matchCloudCallback");
+    Timer::printAllMeansTree();
   }
 }  // namespace pandora_slam
 

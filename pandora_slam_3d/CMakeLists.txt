@@ -67,6 +67,7 @@ add_executable(
 
 target_link_libraries(
   matching_octomap_server
+  utils_lib
   ${catkin_LIBRARIES})
 
 # To check lint : catkin_make roslint_pandora_slam_3d

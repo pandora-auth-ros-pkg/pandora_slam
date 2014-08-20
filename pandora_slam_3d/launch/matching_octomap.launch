@@ -1,0 +1,26 @@
+<launch>
+  <!-- you can load an exisiting tree with <node ... args="tree.bt"> !-->
+  <node
+    name="matching_octomap_server"
+    type="matching_octomap_server"
+    pkg="pandora_slam_3d"
+    output="screen">
+    <param name="resolution" value="0.02" />
+    <param name="frame_id" type="string" value="base_link" />
+    <param name="sensor_model/max_range" value="4.0" />
+    <remap from="cloud_in" to="/laser/point_cloud" />
+  </node>
+  
+  <node
+    name="world2map"
+    type="static_transform_publisher"
+    pkg="tf"
+    args="0 0 0 0 0 0  world map 100" />
+  
+  <node
+    name="map2base"
+    type="static_transform_publisher"
+    pkg="tf"
+    args="0 0 0 0 0 0 map base_link 100" />
+
+</launch>
