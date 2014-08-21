@@ -39,8 +39,14 @@
 
 #include "octomap_server/OctomapServer.h"
 #include <tf/transform_broadcaster.h>
+#include <message_filters/subscriber.h>
+#include <message_filters/synchronizer.h>
+#include <message_filters/sync_policies/exact_time.h>
 #include "matching_octomap_server/randomized_transform.h"
 #include "utils/timer.h"
+
+typedef message_filters::sync_policies::ExactTime<sensor_msgs::PointCloud2,
+  sensor_msgs::PointCloud2> PCSyncPolicy;
 
 namespace pandora_slam
 {
@@ -51,11 +57,19 @@ namespace pandora_slam
     ~MatchingOctomapServer();
    private:
     void matchCloudCallback(
+      const sensor_msgs::PointCloud2::ConstPtr& full_cloud,
       const sensor_msgs::PointCloud2::ConstPtr& subsampled_cloud);
 
-    ros::Subscriber subsampled_cloud_subscriber_;
     tf::Transform previous_tf_;
     tf::TransformBroadcaster tf_broadcaster_;
+    
+    message_filters::Subscriber<sensor_msgs::PointCloud2>*
+      point_cloud_subscriber_;
+    message_filters::Subscriber<sensor_msgs::PointCloud2>*
+      subsampled_cloud_subscriber_;
+    message_filters::Synchronizer<PCSyncPolicy>* synchronizer_;
+    
+    ros::Publisher cloud_publisher_;
   };
 }  // namespace pandora_slam
 

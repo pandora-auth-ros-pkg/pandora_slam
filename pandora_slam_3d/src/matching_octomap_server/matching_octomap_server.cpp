@@ -39,9 +39,21 @@ namespace pandora_slam
 {
   MatchingOctomapServer::MatchingOctomapServer()
   {
-    subsampled_cloud_subscriber_ = m_nh.subscribe(
-      "/kinect/depth_registered/points/subsampled", 1,
-      &MatchingOctomapServer::matchCloudCallback, this);
+    point_cloud_subscriber_ =
+      new message_filters::Subscriber<sensor_msgs::PointCloud2>(
+      m_nh, "/kinect/depth_registered/points", 1);
+    subsampled_cloud_subscriber_=
+      new message_filters::Subscriber<sensor_msgs::PointCloud2>(
+      m_nh, "/kinect/depth_registered/points/subsampled", 1);
+
+    synchronizer_ = new message_filters::Synchronizer<PCSyncPolicy>(
+      PCSyncPolicy(10), *point_cloud_subscriber_,
+      *subsampled_cloud_subscriber_);
+    synchronizer_->registerCallback(boost::bind(
+      &MatchingOctomapServer::matchCloudCallback, this, _1, _2));
+
+    cloud_publisher_ = m_nh.advertise<sensor_msgs::PointCloud2>(
+      "/kinect/depth_registered/points/matched", 5);
 
     previous_tf_ = tf::Transform::getIdentity();
     tf_broadcaster_.sendTransform(tf::StampedTransform(previous_tf_,
@@ -53,8 +65,17 @@ namespace pandora_slam
   }
 
   void MatchingOctomapServer::matchCloudCallback(
+    const sensor_msgs::PointCloud2::ConstPtr& full_cloud,
     const sensor_msgs::PointCloud2::ConstPtr& subsampled_cloud)
   {
+    ///Check if octree is initialize
+    if (m_octree->getRoot() == NULL)
+    {
+      tf_broadcaster_.sendTransform(tf::StampedTransform(previous_tf_,
+        ros::Time::now(), m_worldFrameId, m_baseFrameId));
+      cloud_publisher_.publish(full_cloud);
+      return;
+    }
     Timer::start("matchCloudCallback", "", true);
     Timer::start("computeFitness", "matchCloudCallback", false);
 
@@ -81,14 +102,14 @@ namespace pandora_slam
     pcl::transformPointCloud(subsampled_pc, subsampled_pc, sensorToBase);
 
     ///Search for movement transform with RRHC
-    RandomizedTransform random_transform(previous_tf_, 0.1, 0.5);
+    RandomizedTransform random_transform(previous_tf_, 0.2, 0.5);
     tf::Transform best_transform = previous_tf_;
     double best_fitness = 0;
     double fitness;
     PCLPointCloud cloud;
     Eigen::Matrix4f baseToWorld;
     int points_size;
-    for (int kk = 0; kk < 10000; kk++)
+    for (int kk = 0; kk < 1000; kk++)
     {
       fitness = 0;
 
@@ -106,8 +127,12 @@ namespace pandora_slam
         {
           node_ptr = m_octree->search(cloud.points[ii].x, cloud.points[ii].y,
             cloud.points[ii].z);
-          if (node_ptr != NULL)
+          if (node_ptr == NULL)
           {
+            ///Occupancy for unknown cells is considered 0.5
+            fitness += 0.5;
+          }
+          else{
             fitness += node_ptr->getOccupancy();
           }
         }
@@ -138,12 +163,14 @@ namespace pandora_slam
     
     ///Broadcast new tf
     tf_broadcaster_.sendTransform(tf::StampedTransform(best_transform,
-      ros::Time::now(), m_worldFrameId, m_baseFrameId));
+      subsampled_cloud->header.stamp, m_worldFrameId, m_baseFrameId));
     previous_tf_ = best_transform;
 
     Timer::tick("computeFitness");
     Timer::tick("matchCloudCallback");
     Timer::printAllMeansTree();
+
+    cloud_publisher_.publish(subsampled_cloud);
   }
 }  // namespace pandora_slam
 

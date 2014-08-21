@@ -63,13 +63,20 @@ namespace pandora_slam
     double x, y, z, roll, pitch, yaw;
     tf::Vector3 origin = initial_tf_.getOrigin();
     tf::Matrix3x3 basis = initial_tf_.getBasis();
-    x = origin[0] + rand() * translation_range_ - translation_range_ / 2;
-    y = origin[1] + rand() * translation_range_ - translation_range_ / 2;
-    z = origin[2] + rand() * translation_range_ - translation_range_ / 2;
+    x = origin[0] + static_cast<double>(rand()) / RAND_MAX *
+      translation_range_ - translation_range_ / 2;
+    y = origin[1] + static_cast<double>(rand()) / RAND_MAX *
+      translation_range_ - translation_range_ / 2;
+    //~ z = origin[2] + static_cast<double>(rand()) / RAND_MAX *
+      //~ translation_range_ - translation_range_ / 2;
     basis.getRPY(roll, pitch, yaw);
-    roll = roll + rand() * rotation_range_ - rotation_range_ / 2;
-    pitch = pitch + rand() * rotation_range_ - rotation_range_ / 2;
-    yaw = yaw + rand() * rotation_range_ - rotation_range_ / 2;
+    z = origin[2];
+    //~ roll = roll + static_cast<double>(rand()) / RAND_MAX *
+      //~ rotation_range_ - rotation_range_ / 2;
+    //~ pitch = pitch + static_cast<double>(rand()) / RAND_MAX *
+      //~ rotation_range_ - rotation_range_ / 2;
+    yaw = yaw + static_cast<double>(rand()) / RAND_MAX *
+      rotation_range_ - rotation_range_ / 2;
 
     tf::Vector3 new_origin(x, y, z);
     tf::Matrix3x3 new_basis;
