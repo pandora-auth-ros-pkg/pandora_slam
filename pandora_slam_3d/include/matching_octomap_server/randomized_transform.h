@@ -34,29 +34,29 @@
 *
 * Author: Evangelos Apostolidis
 *********************************************************************/
-#ifndef MATCHING_OCTOMAP_SERVER_MATCHING_OCTOMAP_SERVER_H
-#define MATCHING_OCTOMAP_SERVER_MATCHING_OCTOMAP_SERVER_H
+#ifndef MATCHING_OCTOMAP_SERVER_RANDOMIZED_TRANSFORM_H
+#define MATCHING_OCTOMAP_SERVER_RANDOMIZED_TRANSFORM_H
 
-#include "octomap_server/OctomapServer.h"
-#include <tf/transform_broadcaster.h>
-#include "matching_octomap_server/randomized_transform.h"
-#include "utils/timer.h"
+#include "ros/ros.h"
+#include "tf/tf.h"
 
 namespace pandora_slam
 {
-  class MatchingOctomapServer : public octomap_server::OctomapServer
+  class RandomizedTransform
   {
    public:
-    MatchingOctomapServer();
-    ~MatchingOctomapServer();
-   private:
-    void matchCloudCallback(
-      const sensor_msgs::PointCloud2::ConstPtr& subsampled_cloud);
+    RandomizedTransform();
+    RandomizedTransform(const tf::Transform& initial_tf,
+      const double& translation_range, const double& rotation_range);
+    ~RandomizedTransform();
+    void randomize();
 
-    ros::Subscriber subsampled_cloud_subscriber_;
-    tf::Transform previous_tf_;
-    tf::TransformBroadcaster tf_broadcaster_;
+    tf::Transform transform;
+   private:
+    tf::Transform initial_tf_;
+    double translation_range_;
+    double rotation_range_;
   };
 }  // namespace pandora_slam
 
-#endif  // MATCHING_OCTOMAP_SERVER_MATCHING_OCTOMAP_SERVER_H
+#endif  // MATCHING_OCTOMAP_SERVER_RANDOMIZED_TRANSFORM_H

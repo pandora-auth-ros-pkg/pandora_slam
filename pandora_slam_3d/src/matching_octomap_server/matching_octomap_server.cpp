@@ -40,8 +40,12 @@ namespace pandora_slam
   MatchingOctomapServer::MatchingOctomapServer()
   {
     subsampled_cloud_subscriber_ = m_nh.subscribe(
-      "/kinect/depth_registered/points", 1,
+      "/kinect/depth_registered/points/subsampled", 1,
       &MatchingOctomapServer::matchCloudCallback, this);
+
+    previous_tf_ = tf::Transform::getIdentity();
+    tf_broadcaster_.sendTransform(tf::StampedTransform(previous_tf_,
+      ros::Time::now(), m_worldFrameId, m_baseFrameId));
   }
 
   MatchingOctomapServer::~MatchingOctomapServer()
@@ -57,12 +61,13 @@ namespace pandora_slam
     PCLPointCloud subsampled_pc; // input cloud for matching
     pcl::fromROSMsg(*subsampled_cloud, subsampled_pc);
 
-    tf::StampedTransform sensorToWorldTf;
+    ///Transform cloud to m_baseFrameId
+    tf::StampedTransform sensorToBaseTf;
     try
     {
-      m_tfListener.lookupTransform(m_worldFrameId,
+      m_tfListener.lookupTransform(m_baseFrameId,
         subsampled_cloud->header.frame_id,
-        subsampled_cloud->header.stamp, sensorToWorldTf);
+        subsampled_cloud->header.stamp, sensorToBaseTf);
     }
     catch (tf::TransformException& ex)
     {
@@ -71,27 +76,70 @@ namespace pandora_slam
       return;
     }
 
-    Eigen::Matrix4f sensorToWorld;
-    pcl_ros::transformAsMatrix(sensorToWorldTf, sensorToWorld);
-    pcl::transformPointCloud(subsampled_pc, subsampled_pc, sensorToWorld);
+    Eigen::Matrix4f sensorToBase;
+    pcl_ros::transformAsMatrix(sensorToBaseTf, sensorToBase);
+    pcl::transformPointCloud(subsampled_pc, subsampled_pc, sensorToBase);
 
-    int points_size = subsampled_pc.width * subsampled_pc.height;
-    double fitness = 0;
-    for (int ii = 0; ii < points_size; ii++)
+    ///Search for movement transform with RRHC
+    RandomizedTransform random_transform(previous_tf_, 0.1, 0.5);
+    tf::Transform best_transform = previous_tf_;
+    double best_fitness = 0;
+    double fitness;
+    PCLPointCloud cloud;
+    Eigen::Matrix4f baseToWorld;
+    int points_size;
+    for (int kk = 0; kk < 10000; kk++)
     {
-      if (pcl::isFinite(subsampled_pc.points[ii]))
+      fitness = 0;
+
+      pcl_ros::transformAsMatrix(random_transform.transform, baseToWorld);
+      pcl::transformPointCloud(subsampled_pc, cloud, baseToWorld);
+
+      points_size = cloud.width * cloud.height;
+
+      octomap::OcTreeKey key;
+      octomap::OcTreeNode* node_ptr;
+      for (int ii = 0; ii < points_size; ii++)
       {
-        octomap::OcTreeNode* node_ptr;
-        node_ptr = m_octree->search(subsampled_pc.points[ii].x,
-          subsampled_pc.points[ii].y, subsampled_pc.points[ii].z);
-        if (node_ptr != NULL)
+        if (m_octree->coordToKeyChecked(cloud.points[ii].x,
+          cloud.points[ii].y, cloud.points[ii].z, key))
         {
-          fitness += node_ptr->getOccupancy();
+          node_ptr = m_octree->search(cloud.points[ii].x, cloud.points[ii].y,
+            cloud.points[ii].z);
+          if (node_ptr != NULL)
+          {
+            fitness += node_ptr->getOccupancy();
+          }
         }
       }
+      fitness = fitness / points_size;
+      if (fitness > best_fitness)
+      {
+        best_transform = random_transform.transform;
+        best_fitness = fitness;
+      }
+      random_transform.randomize();
     }
-    fitness = fitness / points_size;
-    ROS_INFO_STREAM("Fitness: " << fitness);
+
+    ///Print results
+    tf::Vector3 new_origin = best_transform.getOrigin();
+    tf::Matrix3x3 new_basis = best_transform.getBasis();
+    double roll, pitch, yaw;
+    new_basis.getRPY(roll, pitch, yaw);
+
+    ROS_INFO_STREAM("Best fitness: " << best_fitness);
+    ROS_INFO_STREAM("New transform:");
+    ROS_INFO_STREAM("x: " << new_origin[0]);
+    ROS_INFO_STREAM("y: " << new_origin[1]);
+    ROS_INFO_STREAM("z: " << new_origin[2]);
+    ROS_INFO_STREAM("R: " << roll / 3.14 * 180);
+    ROS_INFO_STREAM("P: " << pitch / 3.14 * 180);
+    ROS_INFO_STREAM("Y: " << yaw / 3.14 * 180);
+    
+    ///Broadcast new tf
+    tf_broadcaster_.sendTransform(tf::StampedTransform(best_transform,
+      ros::Time::now(), m_worldFrameId, m_baseFrameId));
+    previous_tf_ = best_transform;
 
     Timer::tick("computeFitness");
     Timer::tick("matchCloudCallback");

@@ -61,12 +61,21 @@ target_link_libraries(
   utils_lib
   ${catkin_LIBRARIES})
 
+add_library(
+  randomized_transform
+  src/matching_octomap_server/randomized_transform.cpp)
+
+target_link_libraries(
+  randomized_transform
+  ${catkin_LIBRARIES})
+
 add_executable(
   matching_octomap_server
   src/matching_octomap_server/matching_octomap_server.cpp)
 
 target_link_libraries(
   matching_octomap_server
+  randomized_transform
   utils_lib
   ${catkin_LIBRARIES})
 

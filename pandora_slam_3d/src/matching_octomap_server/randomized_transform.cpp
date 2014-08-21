@@ -34,29 +34,47 @@
 *
 * Author: Evangelos Apostolidis
 *********************************************************************/
-#ifndef MATCHING_OCTOMAP_SERVER_MATCHING_OCTOMAP_SERVER_H
-#define MATCHING_OCTOMAP_SERVER_MATCHING_OCTOMAP_SERVER_H
-
-#include "octomap_server/OctomapServer.h"
-#include <tf/transform_broadcaster.h>
 #include "matching_octomap_server/randomized_transform.h"
-#include "utils/timer.h"
-
 namespace pandora_slam
 {
-  class MatchingOctomapServer : public octomap_server::OctomapServer
+  RandomizedTransform::RandomizedTransform()
+    : initial_tf_(tf::Transform::getIdentity())
   {
-   public:
-    MatchingOctomapServer();
-    ~MatchingOctomapServer();
-   private:
-    void matchCloudCallback(
-      const sensor_msgs::PointCloud2::ConstPtr& subsampled_cloud);
+    transform = initial_tf_;
+    translation_range_ = 0.6;
+    rotation_range_ = 1.57;
+  }
 
-    ros::Subscriber subsampled_cloud_subscriber_;
-    tf::Transform previous_tf_;
-    tf::TransformBroadcaster tf_broadcaster_;
-  };
+  RandomizedTransform::RandomizedTransform(const tf::Transform& initial_tf,
+    const double& translation_range, const double& rotation_range)
+    : initial_tf_(initial_tf)
+  {
+    transform = initial_tf_;
+    translation_range_ = translation_range;
+    rotation_range_ = rotation_range;
+  }
+
+  RandomizedTransform::~RandomizedTransform()
+  {
+  }
+
+  void RandomizedTransform::randomize()
+  {
+    double x, y, z, roll, pitch, yaw;
+    tf::Vector3 origin = initial_tf_.getOrigin();
+    tf::Matrix3x3 basis = initial_tf_.getBasis();
+    x = origin[0] + rand() * translation_range_ - translation_range_ / 2;
+    y = origin[1] + rand() * translation_range_ - translation_range_ / 2;
+    z = origin[2] + rand() * translation_range_ - translation_range_ / 2;
+    basis.getRPY(roll, pitch, yaw);
+    roll = roll + rand() * rotation_range_ - rotation_range_ / 2;
+    pitch = pitch + rand() * rotation_range_ - rotation_range_ / 2;
+    yaw = yaw + rand() * rotation_range_ - rotation_range_ / 2;
+
+    tf::Vector3 new_origin(x, y, z);
+    tf::Matrix3x3 new_basis;
+    new_basis.setRPY(roll, pitch, yaw);
+    tf::Transform new_transform(new_basis, new_origin);
+    transform = new_transform;
+  }
 }  // namespace pandora_slam
-
-#endif  // MATCHING_OCTOMAP_SERVER_MATCHING_OCTOMAP_SERVER_H
