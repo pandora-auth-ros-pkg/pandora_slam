@@ -88,6 +88,7 @@ namespace pandora_slam
     double curvature_threshold_;
     double curvature_min_distance_threshold_;
     double curvature_max_distance_threshold_;
+    bool detect_edges_;
     bool show_curvature_image_;
     bool show_inflation_image_;
     double normal_max_depth_change_factor_;

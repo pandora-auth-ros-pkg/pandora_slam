@@ -39,6 +39,8 @@ namespace pandora_slam
 {
   MatchingOctomapServer::MatchingOctomapServer()
   {
+    voxel_size_ = m_octree->getResolution();
+
     point_cloud_subscriber_ =
       new message_filters::Subscriber<sensor_msgs::PointCloud2>(
       m_nh, "/kinect/depth_registered/points", 1);
@@ -52,7 +54,7 @@ namespace pandora_slam
     synchronizer_->registerCallback(boost::bind(
       &MatchingOctomapServer::matchCloudCallback, this, _1, _2));
 
-    cloud_publisher_ = m_nh.advertise<sensor_msgs::PointCloud2>(
+    cloud_publisher_ = m_nh.advertise<pcl::PCLPointCloud2>(
       "/kinect/depth_registered/points/matched", 5);
 
     previous_tf_ = tf::Transform::getIdentity();
@@ -64,6 +66,22 @@ namespace pandora_slam
   {
   }
 
+  void MatchingOctomapServer::filterAndPublishCloud(
+    const sensor_msgs::PointCloud2::ConstPtr& input_cloud_ptr)
+  {
+    ///Use a voxel grid filter to subsample a point cloud
+    PCLPointCloud input_pc;
+    pcl::fromROSMsg(*input_cloud_ptr, input_pc);
+    pcl::PCLPointCloud2::Ptr cloud_ptr (new pcl::PCLPointCloud2);
+    pcl::PCLPointCloud2::Ptr cloud_filtered_ptr (new pcl::PCLPointCloud2);
+    pcl::toPCLPointCloud2(input_pc, *cloud_ptr);
+    pcl::VoxelGrid<pcl::PCLPointCloud2> voxel_grid;
+    voxel_grid.setInputCloud(cloud_ptr);
+    voxel_grid.setLeafSize(voxel_size_, voxel_size_, voxel_size_);
+    voxel_grid.filter(*cloud_filtered_ptr);
+    cloud_publisher_.publish(*cloud_filtered_ptr);
+  }
+
   void MatchingOctomapServer::matchCloudCallback(
     const sensor_msgs::PointCloud2::ConstPtr& full_cloud,
     const sensor_msgs::PointCloud2::ConstPtr& subsampled_cloud)
@@ -73,11 +91,17 @@ namespace pandora_slam
     {
       tf_broadcaster_.sendTransform(tf::StampedTransform(previous_tf_,
         ros::Time::now(), m_worldFrameId, m_baseFrameId));
-      cloud_publisher_.publish(full_cloud);
+      filterAndPublishCloud(full_cloud);
+      Timer::start("registerCloud", "", true);
+      Timer::start("insertCloudCallback", "registerCloud", false);
       return;
     }
-    Timer::start("matchCloudCallback", "", true);
-    Timer::start("computeFitness", "matchCloudCallback", false);
+    Timer::tick("insertCloudCallback");
+    Timer::tick("registerCloud");
+    Timer::printAllMeansTree();
+
+    Timer::start("registerCloud", "", true);
+    Timer::start("matchCloudCallback", "registerCloud", false);
 
     PCLPointCloud subsampled_pc; // input cloud for matching
     pcl::fromROSMsg(*subsampled_cloud, subsampled_pc);
@@ -166,11 +190,10 @@ namespace pandora_slam
       subsampled_cloud->header.stamp, m_worldFrameId, m_baseFrameId));
     previous_tf_ = best_transform;
 
-    Timer::tick("computeFitness");
     Timer::tick("matchCloudCallback");
-    Timer::printAllMeansTree();
 
-    cloud_publisher_.publish(subsampled_cloud);
+    filterAndPublishCloud(full_cloud);
+    Timer::start("insertCloudCallback", "registerCloud", false);
   }
 }  // namespace pandora_slam
 

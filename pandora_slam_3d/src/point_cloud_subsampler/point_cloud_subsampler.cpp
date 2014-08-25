@@ -56,6 +56,7 @@ namespace pandora_slam
     curvature_threshold_ = 0.06;
     curvature_min_distance_threshold_ = 0.65;
     curvature_max_distance_threshold_ = 2.0;
+    detect_edges_ = true;
     show_curvature_image_ = false;
     show_inflation_image_ = false;
 
@@ -73,39 +74,48 @@ namespace pandora_slam
     const PointCloud::ConstPtr& input_cloud_ptr)
   {
     Timer::start("pointCloudCallback", "", true);
-    Timer::start("preprocessPointCloud", "pointCloudCallback", false);
-
-    /// Create a curvature image from point cloud
-    cv::Mat* curvature_image_ptr(new cv::Mat);
-    curvature_image_ptr->create(
-      input_cloud_ptr->height, input_cloud_ptr->width, CV_32F);
-    estimateCurvature(input_cloud_ptr, curvature_image_ptr);
-
-    ///Remove noise from point curvature image
-    removeNoise(curvature_image_ptr);
-
-    if (show_curvature_image_)
+    PointCloud::Ptr subsampled_cloud(new PointCloud);
+    if (detect_edges_)
     {
-      cv::imshow("Curvature", *curvature_image_ptr);
-      cv::waitKey(1);
+      Timer::start("preprocessPointCloud", "pointCloudCallback", false);
+
+      /// Create a curvature image from point cloud
+      cv::Mat* curvature_image_ptr(new cv::Mat);
+      curvature_image_ptr->create(
+        input_cloud_ptr->height, input_cloud_ptr->width, CV_32F);
+      estimateCurvature(input_cloud_ptr, curvature_image_ptr);
+
+      ///Remove noise from point curvature image
+      removeNoise(curvature_image_ptr);
+
+      if (show_curvature_image_)
+      {
+        cv::imshow("Curvature", *curvature_image_ptr);
+        cv::waitKey(1);
+      }
+
+      /// Inflate edges
+      inflateEdges(curvature_image_ptr);
+
+      Timer::tick("preprocessPointCloud");
+      Timer::start("voxel_grid", "pointCloudCallback", false);
+
+      ///Create subsampled cloud
+      subsampleCloud(input_cloud_ptr, curvature_image_ptr, subsampled_cloud);
+
+      Timer::tick("voxel_grid");
+    }
+    else
+    {
+      ///Create subsampled cloud
+      *subsampled_cloud = *input_cloud_ptr;
+      voxelFilter(subsampled_cloud, sparse_voxel_size_);
     }
 
-    /// Inflate edges
-    inflateEdges(curvature_image_ptr);
-
-    Timer::tick("preprocessPointCloud");
-    Timer::start("voxel_grid", "pointCloudCallback", false);
-
-    ///Create subsampled cloud
-    PointCloud::Ptr subsampled_cloud(new PointCloud);
-    subsampleCloud(input_cloud_ptr, curvature_image_ptr, subsampled_cloud);
     cloud_publisher_.publish(*subsampled_cloud);
 
-    Timer::tick("voxel_grid");
     Timer::tick("pointCloudCallback");
     Timer::printAllMeansTree();
-
-    delete curvature_image_ptr;
   }
 
   void PointCloudSubsampler::estimateCurvature(
@@ -272,6 +282,7 @@ namespace pandora_slam
     curvature_threshold_ = config.curvature_threshold;
     curvature_min_distance_threshold_ = config.curvature_min_distance_threshold;
     curvature_max_distance_threshold_ = config.curvature_max_distance_threshold;
+    detect_edges_ = config.detect_edges;
     show_curvature_image_ = config.show_curvature_image;
     show_inflation_image_ = config.show_inflation_image;
 

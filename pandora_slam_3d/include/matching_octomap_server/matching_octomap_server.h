@@ -60,6 +60,9 @@ namespace pandora_slam
       const sensor_msgs::PointCloud2::ConstPtr& full_cloud,
       const sensor_msgs::PointCloud2::ConstPtr& subsampled_cloud);
 
+    void filterAndPublishCloud(
+      const sensor_msgs::PointCloud2::ConstPtr& input_cloud_ptr);
+
     tf::Transform previous_tf_;
     tf::TransformBroadcaster tf_broadcaster_;
     
@@ -70,6 +73,8 @@ namespace pandora_slam
     message_filters::Synchronizer<PCSyncPolicy>* synchronizer_;
     
     ros::Publisher cloud_publisher_;
+
+    double voxel_size_;
   };
 }  // namespace pandora_slam
 
