@@ -38,13 +38,10 @@
 #define POINT_CLOUD_SUBSAMPLER_POINT_CLOUD_SUBSAMPLER_H
 
 #include "ros/ros.h"
-#include <sensor_msgs/Image.h>
-#include <sensor_msgs/image_encodings.h>
 #include <sensor_msgs/PointCloud2.h>
 #include "pcl_ros/point_cloud.h"
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/filters/filter.h>
-#include <cv_bridge/cv_bridge.h>
 #include <dynamic_reconfigure/server.h>
 #include <pandora_slam_3d/point_cloud_subsamplerConfig.h>
 #include <pcl/features/integral_image_normal.h>

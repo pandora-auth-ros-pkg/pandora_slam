@@ -47,12 +47,15 @@ namespace pandora_slam
     subsampled_cloud_subscriber_=
       new message_filters::Subscriber<sensor_msgs::PointCloud2>(
       m_nh, "/kinect/depth_registered/points/subsampled", 1);
+    odom_subscriber_=
+      new message_filters::Subscriber<nav_msgs::Odometry>(
+      m_nh, "/vo", 1);
 
     synchronizer_ = new message_filters::Synchronizer<PCSyncPolicy>(
       PCSyncPolicy(10), *point_cloud_subscriber_,
-      *subsampled_cloud_subscriber_);
+      *subsampled_cloud_subscriber_, *odom_subscriber_);
     synchronizer_->registerCallback(boost::bind(
-      &MatchingOctomapServer::matchCloudCallback, this, _1, _2));
+      &MatchingOctomapServer::matchCloudCallback, this, _1, _2, _3));
 
     cloud_publisher_ = m_nh.advertise<pcl::PCLPointCloud2>(
       "/kinect/depth_registered/points/matched", 5);
@@ -84,11 +87,14 @@ namespace pandora_slam
 
   void MatchingOctomapServer::matchCloudCallback(
     const sensor_msgs::PointCloud2::ConstPtr& full_cloud,
-    const sensor_msgs::PointCloud2::ConstPtr& subsampled_cloud)
+    const sensor_msgs::PointCloud2::ConstPtr& subsampled_cloud,
+    const nav_msgs::OdometryConstPtr& odom_ptr)
   {
     ///Check if octree is initialize
     if (m_octree->getRoot() == NULL)
     {
+      tf::poseMsgToTF(odom_ptr->pose.pose, previous_odom_);
+
       tf_broadcaster_.sendTransform(tf::StampedTransform(previous_tf_,
         ros::Time::now(), m_worldFrameId, m_baseFrameId));
       filterAndPublishCloud(full_cloud);
@@ -106,7 +112,10 @@ namespace pandora_slam
     PCLPointCloud subsampled_pc; // input cloud for matching
     pcl::fromROSMsg(*subsampled_cloud, subsampled_pc);
 
+    tf::Pose current_odom;
+    tf::poseMsgToTF(odom_ptr->pose.pose, current_odom);
     ///Transform cloud to m_baseFrameId
+    ///Odometry is also considered
     tf::StampedTransform sensorToBaseTf;
     try
     {
@@ -126,8 +135,11 @@ namespace pandora_slam
     pcl::transformPointCloud(subsampled_pc, subsampled_pc, sensorToBase);
 
     ///Search for movement transform with RRHC
-    RandomizedTransform random_transform(previous_tf_, 0.2, 0.5);
-    tf::Transform best_transform = previous_tf_;
+    tf::Transform movement_estimation_tf =
+      previous_tf_ * previous_odom_.inverse() * current_odom;
+    RandomizedTransform random_transform(movement_estimation_tf, 0.1,
+      0.2);
+    tf::Transform best_transform = movement_estimation_tf;
     double best_fitness = 0;
     double fitness;
     PCLPointCloud cloud;
@@ -156,7 +168,8 @@ namespace pandora_slam
             ///Occupancy for unknown cells is considered 0.5
             fitness += 0.5;
           }
-          else{
+          else
+          {
             fitness += node_ptr->getOccupancy();
           }
         }
@@ -184,15 +197,18 @@ namespace pandora_slam
     ROS_INFO_STREAM("R: " << roll / 3.14 * 180);
     ROS_INFO_STREAM("P: " << pitch / 3.14 * 180);
     ROS_INFO_STREAM("Y: " << yaw / 3.14 * 180);
-    
+
     ///Broadcast new tf
     tf_broadcaster_.sendTransform(tf::StampedTransform(best_transform,
       subsampled_cloud->header.stamp, m_worldFrameId, m_baseFrameId));
     previous_tf_ = best_transform;
+    previous_odom_ = current_odom;
 
     Timer::tick("matchCloudCallback");
 
+    ///Subsample full cloud with a vixel grid and publish it
     filterAndPublishCloud(full_cloud);
+
     Timer::start("insertCloudCallback", "registerCloud", false);
   }
 }  // namespace pandora_slam

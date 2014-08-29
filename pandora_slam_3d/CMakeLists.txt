@@ -81,7 +81,7 @@ target_link_libraries(
 
 # To check lint : catkin_make roslint_pandora_slam_3d
 set(ROSLINT_CPP_OPTS
-  "--filter=-build/include_what_you_use, -whitespace/comments, -runtime/references, -runtime/arrays, -whitespace/empty_loop_body")
+  "--filter=-build/include_what_you_use, -whitespace/comments, -runtime/references, -runtime/arrays, -whitespace/empty_loop_body, -runtime/threadsafe_fn")
 
 FILE(GLOB_RECURSE ${PROJECT_NAME}_LINT_SRCS
   RELATIVE ${PROJECT_SOURCE_DIR}

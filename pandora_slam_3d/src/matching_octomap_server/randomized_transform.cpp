@@ -41,8 +41,8 @@ namespace pandora_slam
     : initial_tf_(tf::Transform::getIdentity())
   {
     transform = initial_tf_;
-    translation_range_ = 0.6;
-    rotation_range_ = 1.57;
+    translation_range_ = 0.1;
+    rotation_range_ = 0.5;
   }
 
   RandomizedTransform::RandomizedTransform(const tf::Transform& initial_tf,
@@ -67,14 +67,14 @@ namespace pandora_slam
       translation_range_ - translation_range_ / 2;
     y = origin[1] + static_cast<double>(rand()) / RAND_MAX *
       translation_range_ - translation_range_ / 2;
-    //~ z = origin[2] + static_cast<double>(rand()) / RAND_MAX *
-      //~ translation_range_ - translation_range_ / 2;
+    z = origin[2] + static_cast<double>(rand()) / RAND_MAX *
+      translation_range_ - translation_range_ / 2;
     basis.getRPY(roll, pitch, yaw);
     z = origin[2];
-    //~ roll = roll + static_cast<double>(rand()) / RAND_MAX *
-      //~ rotation_range_ - rotation_range_ / 2;
-    //~ pitch = pitch + static_cast<double>(rand()) / RAND_MAX *
-      //~ rotation_range_ - rotation_range_ / 2;
+    roll = roll + static_cast<double>(rand()) / RAND_MAX *
+      rotation_range_ - rotation_range_ / 2;
+    pitch = pitch + static_cast<double>(rand()) / RAND_MAX *
+      rotation_range_ - rotation_range_ / 2;
     yaw = yaw + static_cast<double>(rand()) / RAND_MAX *
       rotation_range_ - rotation_range_ / 2;
 

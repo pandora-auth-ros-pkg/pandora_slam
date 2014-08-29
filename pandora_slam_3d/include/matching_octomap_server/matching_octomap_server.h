@@ -39,14 +39,16 @@
 
 #include "octomap_server/OctomapServer.h"
 #include <tf/transform_broadcaster.h>
+#include "nav_msgs/Odometry.h"
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
-#include <message_filters/sync_policies/exact_time.h>
+#include <message_filters/sync_policies/approximate_time.h>
 #include "matching_octomap_server/randomized_transform.h"
 #include "utils/timer.h"
 
-typedef message_filters::sync_policies::ExactTime<sensor_msgs::PointCloud2,
-  sensor_msgs::PointCloud2> PCSyncPolicy;
+typedef message_filters::sync_policies::ApproximateTime<
+  sensor_msgs::PointCloud2, sensor_msgs::PointCloud2,
+  nav_msgs::Odometry> PCSyncPolicy;
 
 namespace pandora_slam
 {
@@ -58,20 +60,24 @@ namespace pandora_slam
    private:
     void matchCloudCallback(
       const sensor_msgs::PointCloud2::ConstPtr& full_cloud,
-      const sensor_msgs::PointCloud2::ConstPtr& subsampled_cloud);
+      const sensor_msgs::PointCloud2::ConstPtr& subsampled_cloud,
+      const nav_msgs::OdometryConstPtr& odom_ptr);
 
     void filterAndPublishCloud(
       const sensor_msgs::PointCloud2::ConstPtr& input_cloud_ptr);
 
+    tf::Transform previous_odom_;
     tf::Transform previous_tf_;
     tf::TransformBroadcaster tf_broadcaster_;
-    
+
     message_filters::Subscriber<sensor_msgs::PointCloud2>*
       point_cloud_subscriber_;
     message_filters::Subscriber<sensor_msgs::PointCloud2>*
       subsampled_cloud_subscriber_;
+    message_filters::Subscriber<nav_msgs::Odometry>*
+      odom_subscriber_;
     message_filters::Synchronizer<PCSyncPolicy>* synchronizer_;
-    
+
     ros::Publisher cloud_publisher_;
 
     double voxel_size_;
