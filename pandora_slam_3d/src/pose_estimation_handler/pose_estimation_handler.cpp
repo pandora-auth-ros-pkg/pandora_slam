@@ -40,9 +40,9 @@ namespace pandora_slam
 {
   PoseEstimationHandler::PoseEstimationHandler()
   {
-    //~ slam_2d_frame_id_ = "base_footprint";
-    visual_odometry_topic_ = "/vo";
-    //~ imu_topic_ = "/sensors/imu";
+    slam_2d_frame_id_ = "base_footprint";
+    //~ visual_odometry_topic_ = "/vo";
+    imu_topic_ = "/sensors/imu";
     if (visual_odometry_topic_ != "")
     {
       visual_odometry_subscriber_ = node_handle_.subscribe(
@@ -80,7 +80,7 @@ namespace pandora_slam
     try
     {
       tf_listener.lookupTransform("map", slam_2d_frame_id_,
-        imu_msg_ptr->header.stamp, slam_2d_tf);
+        ros::Time(0), slam_2d_tf);
     }
     catch (tf::TransformException& ex)
     {
@@ -90,18 +90,18 @@ namespace pandora_slam
     }
 
     tf::Quaternion imu_orientation;
-    tf::Matrix3x3 imu_basis(imu_orientation);
     quaternionMsgToTF(imu_msg_ptr->orientation, imu_orientation);
+    tf::Matrix3x3 imu_basis(imu_orientation);
     double dummy_roll, dummy_pitch, dummy_yaw;
     double roll, pitch, yaw;
     imu_basis.getRPY(roll, pitch, dummy_yaw);
     slam_2d_tf.getBasis().getRPY(dummy_roll, dummy_pitch, yaw);
-    tf::Quaternion estimation_orientation;
-    estimation_orientation.setRPY(roll, pitch, yaw);
+    tf::Matrix3x3 estimation_basis;
+    estimation_basis.setRPY(roll, pitch, yaw);
 
     tf::Transform transform;
     transform.setOrigin(slam_2d_tf.getOrigin());
-    transform.setRotation(estimation_orientation);
+    transform.setBasis(estimation_basis);
 
     geometry_msgs::PoseStamped pose_msg;
     pose_msg.header = imu_msg_ptr->header;

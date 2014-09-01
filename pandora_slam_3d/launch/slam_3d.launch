@@ -1,5 +1,5 @@
 <launch>
-  <arg name="openni" default="true"/>
+  <arg name="openni" default="false"/>
   <arg name="kinect" default="false"/>
   <arg name="xtion" default="true"/>
   <arg name="publish_tf" default="true"/>
