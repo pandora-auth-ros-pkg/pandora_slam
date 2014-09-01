@@ -1,0 +1,19 @@
+<launch>
+  <arg name="openni" default="true"/>
+  <arg name="kinect" default="false"/>
+  <arg name="xtion" default="true"/>
+  <arg name="publish_tf" default="true"/>
+
+  <include file="$(find pandora_slam_3d)/launch/point_cloud_subsampler.launch">
+    <arg name="openni" value="$(arg openni)"/>
+    <arg name="kinect" value="$(arg kinect)"/>
+    <arg name="xtion" value="$(arg xtion)"/>
+    <arg name="publish_tf" value="$(arg publish_tf)"/>
+  </include>
+
+  <include file="$(find pandora_slam_3d)/launch/visual_odometry.launch"/>
+
+  <include file="$(find pandora_slam_3d)/launch/pose_estimation_handler.launch"/>
+
+  <include file="$(find pandora_slam_3d)/launch/matching_octomap_server.launch"/>
+</launch>

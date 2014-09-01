@@ -8,8 +8,7 @@
   # ICPProbModel
   <arg name="reg_type" default="ICPProbModel"/>
 
-  <node pkg="ccny_rgbd" type="visual_odometry_node" name="visual_odometry_node"
-    output="screen">
+  <node pkg="ccny_rgbd" type="visual_odometry_node" name="visual_odometry_node">
     
     <remap from="/rgbd/depth" to="/kinect/depth_registered/image_raw"/>
     <remap from="/rgbd/info" to="/kinect/rgb/camera_info"/>

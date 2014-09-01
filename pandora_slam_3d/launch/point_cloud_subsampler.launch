@@ -13,6 +13,5 @@
   <node
     name="point_cloud_subsampler"
     type="point_cloud_subsampler"
-    pkg="pandora_slam_3d"
-    output="screen"/>
+    pkg="pandora_slam_3d"/>
 </launch>

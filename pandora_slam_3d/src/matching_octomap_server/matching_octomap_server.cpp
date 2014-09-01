@@ -47,13 +47,13 @@ namespace pandora_slam
     subsampled_cloud_subscriber_=
       new message_filters::Subscriber<sensor_msgs::PointCloud2>(
       m_nh, "/kinect/depth_registered/points/subsampled", 1);
-    odom_subscriber_=
-      new message_filters::Subscriber<nav_msgs::Odometry>(
-      m_nh, "/vo", 1);
+    estimation_subscriber_=
+      new message_filters::Subscriber<geometry_msgs::PoseStamped>(
+      m_nh, "/pose_estimation_handler/pose", 1);
 
     synchronizer_ = new message_filters::Synchronizer<PCSyncPolicy>(
       PCSyncPolicy(10), *point_cloud_subscriber_,
-      *subsampled_cloud_subscriber_, *odom_subscriber_);
+      *subsampled_cloud_subscriber_, *estimation_subscriber_);
     synchronizer_->registerCallback(boost::bind(
       &MatchingOctomapServer::matchCloudCallback, this, _1, _2, _3));
 
@@ -88,12 +88,12 @@ namespace pandora_slam
   void MatchingOctomapServer::matchCloudCallback(
     const sensor_msgs::PointCloud2::ConstPtr& full_cloud,
     const sensor_msgs::PointCloud2::ConstPtr& subsampled_cloud,
-    const nav_msgs::OdometryConstPtr& odom_ptr)
+    const geometry_msgs::PoseStampedConstPtr& pose_ptr)
   {
     ///Check if octree is initialize
     if (m_octree->getRoot() == NULL)
     {
-      tf::poseMsgToTF(odom_ptr->pose.pose, previous_odom_);
+      tf::poseMsgToTF(pose_ptr->pose, previous_odom_);
 
       tf_broadcaster_.sendTransform(tf::StampedTransform(previous_tf_,
         ros::Time::now(), m_worldFrameId, m_baseFrameId));
@@ -113,7 +113,7 @@ namespace pandora_slam
     pcl::fromROSMsg(*subsampled_cloud, subsampled_pc);
 
     tf::Pose current_odom;
-    tf::poseMsgToTF(odom_ptr->pose.pose, current_odom);
+    tf::poseMsgToTF(pose_ptr->pose, current_odom);
     ///Transform cloud to m_baseFrameId
     ///Odometry is also considered
     tf::StampedTransform sensorToBaseTf;

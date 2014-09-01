@@ -1,0 +1,7 @@
+<launch>
+  <node
+    name="pose_estimation_handler"
+    type="pose_estimation_handler"
+    pkg="pandora_slam_3d"
+    output="screen"/>
+</launch>

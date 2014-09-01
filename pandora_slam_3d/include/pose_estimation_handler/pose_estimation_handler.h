@@ -34,54 +34,40 @@
 *
 * Author: Evangelos Apostolidis
 *********************************************************************/
-#ifndef MATCHING_OCTOMAP_SERVER_MATCHING_OCTOMAP_SERVER_H
-#define MATCHING_OCTOMAP_SERVER_MATCHING_OCTOMAP_SERVER_H
+#ifndef POSE_ESTIMATION_HANDLER_POSE_ESTIMATION_HANDLER_H
+#define POSE_ESTIMATION_HANDLER_POSE_ESTIMATION_HANDLER_H
 
-#include "octomap_server/OctomapServer.h"
+#include "ros/ros.h"
+#include "tf/tf.h"
 #include <tf/transform_broadcaster.h>
+#include <tf/transform_listener.h>
+#include "nav_msgs/Odometry.h"
+#include "sensor_msgs/Imu.h"
 #include "geometry_msgs/PoseStamped.h"
-#include <message_filters/subscriber.h>
-#include <message_filters/synchronizer.h>
-#include <message_filters/sync_policies/approximate_time.h>
-#include "matching_octomap_server/randomized_transform.h"
 #include "utils/timer.h"
-
-typedef message_filters::sync_policies::ApproximateTime<
-  sensor_msgs::PointCloud2, sensor_msgs::PointCloud2,
-  geometry_msgs::PoseStamped> PCSyncPolicy;
 
 namespace pandora_slam
 {
-  class MatchingOctomapServer : public octomap_server::OctomapServer
+  class PoseEstimationHandler
   {
    public:
-    MatchingOctomapServer();
-    ~MatchingOctomapServer();
+    PoseEstimationHandler();
+    ~PoseEstimationHandler();
    private:
-    void matchCloudCallback(
-      const sensor_msgs::PointCloud2::ConstPtr& full_cloud,
-      const sensor_msgs::PointCloud2::ConstPtr& subsampled_cloud,
-      const geometry_msgs::PoseStampedConstPtr& pose_ptr);
+    void visualOdometryCallback(
+      const nav_msgs::OdometryConstPtr& odom_ptr);
+    void imuCallback(const sensor_msgs::ImuConstPtr& imu_msg_ptr);
 
-    void filterAndPublishCloud(
-      const sensor_msgs::PointCloud2::ConstPtr& input_cloud_ptr);
+    ros::NodeHandle node_handle_;
+    ros::Subscriber visual_odometry_subscriber_;
+    ros::Subscriber imu_subscriber_;
+    ros::Publisher pose_publisher_;
+    tf::TransformListener tf_listener;
 
-    tf::Transform previous_odom_;
-    tf::Transform previous_tf_;
-    tf::TransformBroadcaster tf_broadcaster_;
-
-    message_filters::Subscriber<sensor_msgs::PointCloud2>*
-      point_cloud_subscriber_;
-    message_filters::Subscriber<sensor_msgs::PointCloud2>*
-      subsampled_cloud_subscriber_;
-    message_filters::Subscriber<geometry_msgs::PoseStamped>*
-      estimation_subscriber_;
-    message_filters::Synchronizer<PCSyncPolicy>* synchronizer_;
-
-    ros::Publisher cloud_publisher_;
-
-    double voxel_size_;
+    std::string slam_2d_frame_id_;
+    std::string visual_odometry_topic_;
+    std::string imu_topic_;
   };
 }  // namespace pandora_slam
 
-#endif  // MATCHING_OCTOMAP_SERVER_MATCHING_OCTOMAP_SERVER_H
+#endif  // POSE_ESTIMATION_HANDLER_POSE_ESTIMATION_HANDLER_H
