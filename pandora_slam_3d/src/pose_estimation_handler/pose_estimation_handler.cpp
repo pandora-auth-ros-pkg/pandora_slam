@@ -40,20 +40,29 @@ namespace pandora_slam
 {
   PoseEstimationHandler::PoseEstimationHandler()
   {
-    slam_2d_frame_id_ = "base_footprint";
+    //~ slam_2d_frame_id_ = "base_footprint";
+    //~ imu_topic_ = "/sensors/imu";
     //~ visual_odometry_topic_ = "/vo";
-    imu_topic_ = "/sensors/imu";
-    if (visual_odometry_topic_ != "")
-    {
-      visual_odometry_subscriber_ = node_handle_.subscribe(
-        visual_odometry_topic_, 1,
-        &PoseEstimationHandler::visualOdometryCallback, this);
-    }
+    cloud_topic_ =
+      "/kinect/depth_registered/points/subsampled";
+
     if (imu_topic_ != "")
     {
       imu_subscriber_ = node_handle_.subscribe(
         imu_topic_, 1,
         &PoseEstimationHandler::imuCallback, this);
+    }
+    else if (visual_odometry_topic_ != "")
+    {
+      visual_odometry_subscriber_ = node_handle_.subscribe(
+        visual_odometry_topic_, 1,
+        &PoseEstimationHandler::visualOdometryCallback, this);
+    }
+    else
+    {
+      cloud_subscriber_ = node_handle_.subscribe(
+        cloud_topic_, 1,
+        &PoseEstimationHandler::cloudCallback, this);
     }
     pose_publisher_ = node_handle_.advertise<
       geometry_msgs::PoseStamped>(
@@ -62,6 +71,17 @@ namespace pandora_slam
 
   PoseEstimationHandler::~PoseEstimationHandler()
   {
+  }
+
+  void PoseEstimationHandler::cloudCallback(
+    const sensor_msgs::PointCloud2ConstPtr& cloud_msg_ptr)
+  {
+    geometry_msgs::PoseStamped pose_msg;
+    pose_msg.header = cloud_msg_ptr->header;
+    tf::Transform transform(tf::createIdentityQuaternion(),
+      tf::Vector3(0, 0, 0));
+    tf::poseTFToMsg(transform, pose_msg.pose);
+    pose_publisher_.publish(pose_msg);
   }
 
   void PoseEstimationHandler::visualOdometryCallback(

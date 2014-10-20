@@ -1,7 +1,7 @@
 <launch>
   <arg name="kinect" default="false"/>
   <arg name="xtion" default="true"/>
-  <arg name="publish_tf" default="true"/>
+  <arg name="publish_tf" default="false"/>
 
   <group unless="$(arg xtion)">
     <include if="$(arg kinect)" file="$(find openni_launch)/launch/openni.launch">

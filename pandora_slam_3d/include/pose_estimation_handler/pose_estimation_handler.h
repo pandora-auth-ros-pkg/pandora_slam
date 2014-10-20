@@ -57,16 +57,20 @@ namespace pandora_slam
     void visualOdometryCallback(
       const nav_msgs::OdometryConstPtr& odom_ptr);
     void imuCallback(const sensor_msgs::ImuConstPtr& imu_msg_ptr);
+    void cloudCallback(
+      const sensor_msgs::PointCloud2ConstPtr& cloud_msg_ptr);
 
     ros::NodeHandle node_handle_;
     ros::Subscriber visual_odometry_subscriber_;
     ros::Subscriber imu_subscriber_;
+    ros::Subscriber cloud_subscriber_;
     ros::Publisher pose_publisher_;
     tf::TransformListener tf_listener;
 
     std::string slam_2d_frame_id_;
     std::string visual_odometry_topic_;
     std::string imu_topic_;
+    std::string cloud_topic_;
   };
 }  // namespace pandora_slam
 
