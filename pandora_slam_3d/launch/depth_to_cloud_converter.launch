@@ -1,0 +1,9 @@
+<launch>
+  <node
+    pkg="nodelet" type="nodelet" name="depth_to_cloud"
+    args="standalone depth_image_proc/point_cloud_xyz">
+      <remap from="camera_info" to="/camera/depth/camera_info" />
+      <remap from="image_rect" to="/camera/depth/image" />
+      <remap from="points" to="/kinect/depth_registered/points" />
+  </node>
+</launch>

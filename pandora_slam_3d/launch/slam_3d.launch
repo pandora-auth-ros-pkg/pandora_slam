@@ -4,6 +4,8 @@
   <arg name="xtion" default="false"/>
   <arg name="publish_tf" default="false"/>
   <arg name="visual_odometry" default="false"/>
+  <arg name="pose_estimation_handler" default="true"/>
+  <arg name="matching_octomap_server" default="true"/>
 
   <include file="$(find pandora_slam_3d)/launch/point_cloud_subsampler.launch">
     <arg name="openni" value="$(arg openni)"/>
@@ -15,7 +17,9 @@
   <include if="$(arg visual_odometry)"
     file="$(find pandora_slam_3d)/launch/visual_odometry.launch"/>
 
-  <include file="$(find pandora_slam_3d)/launch/pose_estimation_handler.launch"/>
+  <include if="$(arg pose_estimation_handler)"
+    file="$(find pandora_slam_3d)/launch/pose_estimation_handler.launch"/>
 
-  <include file="$(find pandora_slam_3d)/launch/matching_octomap_server.launch"/>
+  <include if="$(arg matching_octomap_server)"
+    file="$(find pandora_slam_3d)/launch/matching_octomap_server.launch"/>
 </launch>

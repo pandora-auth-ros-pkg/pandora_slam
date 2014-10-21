@@ -1,0 +1,11 @@
+<launch>
+  <node pkg="pandora_slam_3d" type="tf_remap.py" name="tf_remapper" output="screen">
+    <rosparam param="mappings">
+    - {old: "/kinect",
+      new: "/base_link"}
+    </rosparam>
+    <rosparam param="ignore">
+    - "/world"
+    </rosparam>
+  </node>
+</launch>
