@@ -42,7 +42,7 @@ namespace pandora_slam
   {
     //~ slam_2d_frame_id_ = "base_footprint";
     //~ imu_topic_ = "/sensors/imu";
-    //~ visual_odometry_topic_ = "/vo";
+    visual_odometry_topic_ = "/vo";
     cloud_topic_ =
       "/kinect/depth_registered/points/subsampled";
 
