@@ -38,6 +38,7 @@
 import roslib; roslib.load_manifest('tf')
 
 import rospy
+import copy
 from tf.msg import tfMessage
 
 class TfRemapper:
@@ -61,15 +62,18 @@ class TfRemapper:
     def callback(self, tf_msg):
         new_tf_msg = tfMessage()
         for transform in tf_msg.transforms:
-            if transform.header.frame_id not in self.ignore and transform.child_frame_id  not in self.ignore:
-                new_tf_msg.transforms.append(transform)
-
+            new_tf_msg.transforms.append(copy.deepcopy(transform))
         for transform in new_tf_msg.transforms:
-            if transform.header.frame_id in self.mappings:
-                transform.header.frame_id = self.mappings[transform.header.frame_id]
-            if transform.child_frame_id  in self.mappings:
-                transform.child_frame_id = self.mappings[transform.child_frame_id]
-                
+            transform.header.frame_id = transform.header.frame_id + '_old'
+            transform.child_frame_id = transform.child_frame_id + '_old'
+
+        for transform in tf_msg.transforms:
+            if transform.header.frame_id not in self.ignore and transform.child_frame_id  not in self.ignore:
+                if transform.header.frame_id in self.mappings:
+                    transform.header.frame_id = self.mappings[transform.header.frame_id]
+                if transform.child_frame_id  in self.mappings:
+                    transform.child_frame_id = self.mappings[transform.child_frame_id]
+                new_tf_msg.transforms.append(copy.deepcopy(transform))
         self.pub.publish(new_tf_msg)
 
 def remap_tf():
