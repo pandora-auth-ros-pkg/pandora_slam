@@ -1,0 +1,5 @@
+<launch>
+  <node pkg="tf" type="static_transform_publisher" name="world_old_to_map_tf"
+    args="0.0512433047295 -1.08981158447 1.54716363525 -5.7362178035e-05
+    -0.00600908055445 0.755745457614 0.654837911972 world_old map 100" />
+</launch>

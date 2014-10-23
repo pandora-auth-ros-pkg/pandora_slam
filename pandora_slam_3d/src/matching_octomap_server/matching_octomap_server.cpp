@@ -145,7 +145,7 @@ namespace pandora_slam
     PCLPointCloud cloud;
     Eigen::Matrix4f baseToWorld;
     int points_size;
-    for (int kk = 0; kk < 1000; kk++)
+    for (int kk = 0; kk < 5000; kk++)
     {
       fitness = 0;
 
@@ -179,6 +179,10 @@ namespace pandora_slam
       {
         best_transform = random_transform.transform;
         best_fitness = fitness;
+        if ((best_fitness > 0.85) || (best_fitness > 0.7 && kk > 500))
+        {
+          break;
+        }
       }
       random_transform.randomize();
     }
