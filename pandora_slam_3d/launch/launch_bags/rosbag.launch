@@ -1,12 +1,15 @@
 <launch>
   <arg name="bag_path" default="/home/vagelis/bags/"/>
   <arg name="bag_name" default="rgbd_dataset_freiburg2_xyz"/>
+<!--
+  <arg name="bag_name" default="rgbd_dataset_freiburg2_pioneer_360"/>
+-->
 
   <node
     pkg="rosbag"
     type="play"
     name="rosbag"
-    args="--clock tf:=tf_old $(arg bag_path)$(arg bag_name).bag"/>
+    args="--clock tf:=tf_old scan:=laser/scan $(arg bag_path)$(arg bag_name).bag -r 0.5"/>
 
   <include file="$(find pandora_slam_3d)/launch/launch_bags/$(arg bag_name)_tf.launch"/>
 </launch>

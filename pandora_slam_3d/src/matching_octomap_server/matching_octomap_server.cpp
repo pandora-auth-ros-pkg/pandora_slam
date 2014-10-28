@@ -119,6 +119,9 @@ namespace pandora_slam
     tf::StampedTransform sensorToBaseTf;
     try
     {
+      m_tfListener.waitForTransform(m_baseFrameId,
+        subsampled_cloud->header.frame_id,
+        subsampled_cloud->header.stamp, ros::Duration(0.1));
       m_tfListener.lookupTransform(m_baseFrameId,
         subsampled_cloud->header.frame_id,
         subsampled_cloud->header.stamp, sensorToBaseTf);
@@ -145,7 +148,7 @@ namespace pandora_slam
     PCLPointCloud cloud;
     Eigen::Matrix4f baseToWorld;
     int points_size;
-    for (int kk = 0; kk < 5000; kk++)
+    for (int kk = 0; kk < 1000; kk++)
     {
       fitness = 0;
 
@@ -179,7 +182,8 @@ namespace pandora_slam
       {
         best_transform = random_transform.transform;
         best_fitness = fitness;
-        if ((best_fitness > 0.85) || (best_fitness > 0.7 && kk > 500))
+        //~ if ((best_fitness > 0.85) || (best_fitness > 0.7 && kk > 1000))
+        if ((best_fitness > 0.85))
         {
           break;
         }
