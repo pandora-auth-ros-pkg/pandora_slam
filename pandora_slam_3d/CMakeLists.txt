@@ -87,6 +87,14 @@ target_link_libraries(
   pose_estimation_handler
   utils_lib
   ${catkin_LIBRARIES})
+  
+add_executable(
+  trajectory_saver
+  src/trajectory_saver/trajectory_saver.cpp)
+
+target_link_libraries(
+  trajectory_saver
+  ${catkin_LIBRARIES})
 
 # To check lint : catkin_make roslint_pandora_slam_3d
 set(ROSLINT_CPP_OPTS
