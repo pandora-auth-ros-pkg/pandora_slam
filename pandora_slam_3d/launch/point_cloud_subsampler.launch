@@ -4,6 +4,11 @@
   <arg name="xtion" default="true"/>
   <arg name="publish_tf" default="true"/>
 
+  <rosparam
+    command="load"
+    ns="slam_3d"
+    file="$(find pandora_slam_3d)/config/topic_names.yaml"/>
+
   <include if="$(arg openni)" file="$(find pandora_slam_3d)/launch/openni.launch">
     <arg name="kinect" value="$(arg kinect)"/>
     <arg name="xtion" value="$(arg xtion)"/>

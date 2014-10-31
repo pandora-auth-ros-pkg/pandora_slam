@@ -40,7 +40,7 @@ namespace pandora_slam
   RandomizedTransform::RandomizedTransform()
     : initial_tf_(tf::Transform::getIdentity())
   {
-    transform = initial_tf_;
+    transform_ = initial_tf_;
     translation_range_ = 0.1;
     rotation_range_ = 0.5;
   }
@@ -49,7 +49,7 @@ namespace pandora_slam
     const double& translation_range, const double& rotation_range)
     : initial_tf_(initial_tf)
   {
-    transform = initial_tf_;
+    transform_ = initial_tf_;
     translation_range_ = translation_range;
     rotation_range_ = rotation_range;
   }
@@ -82,6 +82,6 @@ namespace pandora_slam
     tf::Matrix3x3 new_basis;
     new_basis.setRPY(roll, pitch, yaw);
     tf::Transform new_transform(new_basis, new_origin);
-    transform = new_transform;
+    transform_ = new_transform;
   }
 }  // namespace pandora_slam

@@ -1,0 +1,2 @@
+slam_2d_frame_id : base_footprint
+imu_topic : /sensors/imu

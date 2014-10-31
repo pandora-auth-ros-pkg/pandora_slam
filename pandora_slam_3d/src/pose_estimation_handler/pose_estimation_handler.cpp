@@ -40,33 +40,44 @@ namespace pandora_slam
 {
   PoseEstimationHandler::PoseEstimationHandler()
   {
-    //~ slam_2d_frame_id_ = "base_footprint";
-    //~ imu_topic_ = "/sensors/imu";
-    visual_odometry_topic_ = "/vo";
-    cloud_topic_ =
-      "/kinect/depth_registered/points/subsampled";
+    std::string visual_odometry_topic;
+    std::string imu_topic;
+    std::string cloud_topic;
+    std::string pose_topic;
 
-    if (imu_topic_ != "")
+    node_handle_.param<std::string>("slam_3d/subsampled_cloud_topic",
+      cloud_topic, "/kinect/depth_registered/points/subsampled");
+    node_handle_.param<std::string>("slam_3d/pose_estimation_topic",
+      pose_topic, "/pose_estimation_handler/pose");
+    node_handle_.param<std::string>(
+      "pose_estimation_handler/visual_odometry_topic",
+      visual_odometry_topic, "");
+    node_handle_.param<std::string>(
+      "pose_estimation_handler/slam_2d_frame_id", slam_2d_frame_id_,
+      "");
+    node_handle_.param<std::string>("pose_estimation_handler/imu_topic",
+      imu_topic, "");
+
+    if (imu_topic != "")
     {
       imu_subscriber_ = node_handle_.subscribe(
-        imu_topic_, 1,
+        imu_topic, 1,
         &PoseEstimationHandler::imuCallback, this);
     }
-    else if (visual_odometry_topic_ != "")
+    else if (visual_odometry_topic != "")
     {
       visual_odometry_subscriber_ = node_handle_.subscribe(
-        visual_odometry_topic_, 1,
+        visual_odometry_topic, 1,
         &PoseEstimationHandler::visualOdometryCallback, this);
     }
     else
     {
       cloud_subscriber_ = node_handle_.subscribe(
-        cloud_topic_, 1,
+        cloud_topic, 1,
         &PoseEstimationHandler::cloudCallback, this);
     }
     pose_publisher_ = node_handle_.advertise<
-      geometry_msgs::PoseStamped>(
-      "/pose_estimation_handler/pose", 5);
+      geometry_msgs::PoseStamped>(pose_topic, 5);
   }
 
   PoseEstimationHandler::~PoseEstimationHandler()
@@ -96,6 +107,7 @@ namespace pandora_slam
   void PoseEstimationHandler::imuCallback(
     const sensor_msgs::ImuConstPtr& imu_msg_ptr)
   {
+    // TODO add if slam_2d_frame = ""
     tf::StampedTransform slam_2d_tf;
     try
     {

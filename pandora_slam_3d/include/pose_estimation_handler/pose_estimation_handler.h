@@ -68,9 +68,6 @@ namespace pandora_slam
     tf::TransformListener tf_listener;
 
     std::string slam_2d_frame_id_;
-    std::string visual_odometry_topic_;
-    std::string imu_topic_;
-    std::string cloud_topic_;
   };
 }  // namespace pandora_slam
 

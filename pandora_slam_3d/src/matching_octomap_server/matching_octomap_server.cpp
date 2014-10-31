@@ -41,15 +41,38 @@ namespace pandora_slam
   {
     voxel_size_ = m_octree->getResolution();
 
+    std::string cloud_topic;
+    std::string subsampled_cloud_topic;
+    std::string matched_cloud_topic;
+    std::string pose_topic;
+
+    m_nh.param<std::string>("slam_3d/point_cloud_topic",
+      cloud_topic, "/kinect/depth_registered/points");
+    m_nh.param<std::string>("slam_3d/subsampled_cloud_topic",
+      subsampled_cloud_topic,
+      "/kinect/depth_registered/points/subsampled");
+    m_nh.param<std::string>("slam_3d/matched_cloud_topic",
+      matched_cloud_topic,
+      "/kinect/depth_registered/points/matched");
+    m_nh.param<std::string>("slam_3d/pose_estimation_topic",
+      pose_topic,
+      "/pose_estimation_handler/pose");
+    m_nh.param(
+      "matching_octomap_server/random_transform/translation_range",
+      translation_range_, 0.5);
+    m_nh.param(
+      "matching_octomap_server/random_transform/rotation_range",
+      rotation_range_, 0.6);
+
     point_cloud_subscriber_ =
       new message_filters::Subscriber<sensor_msgs::PointCloud2>(
-      m_nh, "/kinect/depth_registered/points", 1);
+      m_nh, cloud_topic, 1);
     subsampled_cloud_subscriber_=
       new message_filters::Subscriber<sensor_msgs::PointCloud2>(
-      m_nh, "/kinect/depth_registered/points/subsampled", 1);
+      m_nh, subsampled_cloud_topic, 1);
     estimation_subscriber_=
       new message_filters::Subscriber<geometry_msgs::PoseStamped>(
-      m_nh, "/pose_estimation_handler/pose", 1);
+      m_nh, pose_topic, 1);
 
     synchronizer_ = new message_filters::Synchronizer<PCSyncPolicy>(
       PCSyncPolicy(10), *point_cloud_subscriber_,
@@ -58,7 +81,7 @@ namespace pandora_slam
       &MatchingOctomapServer::matchCloudCallback, this, _1, _2, _3));
 
     cloud_publisher_ = m_nh.advertise<pcl::PCLPointCloud2>(
-      "/kinect/depth_registered/points/matched", 5);
+      matched_cloud_topic, 5);
 
     previous_tf_ = tf::Transform::getIdentity();
     tf_broadcaster_.sendTransform(tf::StampedTransform(previous_tf_,
@@ -140,8 +163,8 @@ namespace pandora_slam
     ///Search for movement transform with RRHC
     tf::Transform movement_estimation_tf =
       previous_tf_ * previous_odom_.inverse() * current_odom;
-    RandomizedTransform random_transform(movement_estimation_tf, 0.1,
-      0.2);
+    RandomizedTransform random_transform(movement_estimation_tf,
+      translation_range_, rotation_range_);
     tf::Transform best_transform = movement_estimation_tf;
     double best_fitness = 0;
     double fitness;
@@ -152,7 +175,7 @@ namespace pandora_slam
     {
       fitness = 0;
 
-      pcl_ros::transformAsMatrix(random_transform.transform, baseToWorld);
+      pcl_ros::transformAsMatrix(random_transform.getTransform(), baseToWorld);
       pcl::transformPointCloud(subsampled_pc, cloud, baseToWorld);
 
       points_size = cloud.width * cloud.height;
@@ -180,7 +203,7 @@ namespace pandora_slam
       fitness = fitness / points_size;
       if (fitness > best_fitness)
       {
-        best_transform = random_transform.transform;
+        best_transform = random_transform.getTransform();
         best_fitness = fitness;
         //~ if ((best_fitness > 0.85) || (best_fitness > 0.7 && kk > 1000))
         if ((best_fitness > 0.85))

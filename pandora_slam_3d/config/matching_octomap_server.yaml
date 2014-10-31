@@ -1,0 +1,7 @@
+resolution : 0.02
+frame_id : map
+base_frame_id : base_link
+sensor_model/max_range : 4.0
+random_transform/translation_range : 0.1
+random_transform/rotation_range : 0.2
+

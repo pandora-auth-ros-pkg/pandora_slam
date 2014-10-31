@@ -50,9 +50,13 @@ namespace pandora_slam
       const double& translation_range, const double& rotation_range);
     ~RandomizedTransform();
     void randomize();
+    inline tf::Transform getTransform()
+    {
+      return transform_;
+    };
 
-    tf::Transform transform;
    private:
+    tf::Transform transform_;
     tf::Transform initial_tf_;
     double translation_range_;
     double rotation_range_;

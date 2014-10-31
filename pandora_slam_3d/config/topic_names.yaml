@@ -1,0 +1,4 @@
+point_cloud_topic : /kinect/depth_registered/points
+subsampled_cloud_topic : /kinect/depth_registered/points/subsampled
+matched_cloud_topic : /kinect/depth_registered/points/matched
+pose_estimation_topic : /pose_estimation_handler/pose

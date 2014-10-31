@@ -4,6 +4,7 @@
   <arg name="xtion" default="false"/>
   <arg name="publish_tf" default="false"/>
   <arg name="visual_odometry" default="false"/>
+  <arg name="slam_2d" default="false"/>
   <arg name="pose_estimation_handler" default="true"/>
   <arg name="matching_octomap_server" default="true"/>
 
@@ -14,12 +15,20 @@
     <arg name="publish_tf" value="$(arg publish_tf)"/>
   </include>
 
-  <include if="$(arg visual_odometry)"
-    file="$(find pandora_slam_3d)/launch/visual_odometry.launch"/>
-
-  <include if="$(arg pose_estimation_handler)"
-    file="$(find pandora_slam_3d)/launch/pose_estimation_handler.launch"/>
-
   <include if="$(arg matching_octomap_server)"
     file="$(find pandora_slam_3d)/launch/matching_octomap_server.launch"/>
+
+  <include if="$(arg pose_estimation_handler)"
+    file="$(find pandora_slam_3d)/launch/pose_estimation_handler.launch">
+    <arg name="visual_odometry" value="$(arg visual_odometry)"/>
+    <arg name="slam_2d" value="$(arg slam_2d)"/>
+  </include>
+
+  <include if="$(arg visual_odometry)"
+    file="$(find pandora_slam_3d)/launch/visual_odometry.launch"/>
+  
+  <include if="$(arg slam_2d)"
+    file="$(find pandora_slam_2d)/launch/pandora_slam_2d.launch"/>
+  <include if="$(arg slam_2d)"
+    file="$(find state_manager)/launch/stateManager.launch" /> 
 </launch>

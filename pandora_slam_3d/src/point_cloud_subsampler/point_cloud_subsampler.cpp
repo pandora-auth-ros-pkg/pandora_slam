@@ -40,12 +40,19 @@ namespace pandora_slam
 {
   PointCloudSubsampler::PointCloudSubsampler()
   {
+    std::string cloud_topic;
+    std::string subsampled_cloud_topic;
+    node_handle_.param<std::string>("slam_3d/point_cloud_topic",
+      cloud_topic, "/kinect/depth_registered/points");
+    node_handle_.param<std::string>("slam_3d/subsampled_cloud_topic",
+      subsampled_cloud_topic,
+      "/kinect/depth_registered/points/subsampled");
+
     cloud_subscriber_ = node_handle_.subscribe(
-      "/kinect/depth_registered/points", 1,
-      &PointCloudSubsampler::pointCloudCallback, this);
+      cloud_topic, 1, &PointCloudSubsampler::pointCloudCallback, this);
 
     cloud_publisher_ = node_handle_.advertise<PointCloud>(
-      "/kinect/depth_registered/points/subsampled", 5);
+      subsampled_cloud_topic, 5);
 
     inflation_kernel_size_ = 15;
     blur_kernel_size_ = 7;

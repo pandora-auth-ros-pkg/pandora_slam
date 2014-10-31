@@ -1,7 +1,21 @@
 <launch>
+  <arg name="visual_odometry" default="false"/>
+  <arg name="slam_2d" default="false"/>
+
   <node
     name="pose_estimation_handler"
     type="pose_estimation_handler"
     pkg="pandora_slam_3d"
-    output="screen"/>
+    output="screen">
+
+    <rosparam
+      if="$(arg visual_odometry)"
+      command="load"
+      file="$(find pandora_slam_3d)/config/pose_estimation_handler_vo.yaml"/>
+
+    <rosparam
+      if="$(arg slam_2d)"
+      command="load"
+      file="$(find pandora_slam_3d)/config/pose_estimation_handler_slam_2d.yaml"/>
+  </node>
 </launch>

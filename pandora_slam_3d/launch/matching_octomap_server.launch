@@ -5,10 +5,9 @@
     type="matching_octomap_server"
     pkg="pandora_slam_3d"
     output="screen">
-    <param name="resolution" value="0.02" />
-    <param name="frame_id" type="string" value="map" />
-    <param name="base_frame_id" type="string" value="base_link" />
-    <param name="sensor_model/max_range" value="4.0" />
+    <rosparam
+      command="load"
+      file="$(find pandora_slam_3d)/config/matching_octomap_server.yaml"/>
     <remap from="cloud_in" to="/kinect/depth_registered/points/matched" />
   </node>
 

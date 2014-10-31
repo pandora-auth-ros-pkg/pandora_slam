@@ -81,6 +81,8 @@ namespace pandora_slam
     ros::Publisher cloud_publisher_;
 
     double voxel_size_;
+    double translation_range_;
+    double rotation_range_;
   };
 }  // namespace pandora_slam
 
