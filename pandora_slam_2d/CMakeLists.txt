@@ -6,7 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
     tf 
     state_manager
     diagnostic_updater
-    state_manager_communications
+    state_manager_msgs
     crsm_slam
     roslint
 )
@@ -19,7 +19,7 @@ catkin_package(
       tf 
       state_manager
       diagnostic_updater
-      state_manager_communications
+      state_manager_msgs
       crsm_slam
       roslint
     INCLUDE_DIRS include
@@ -43,7 +43,7 @@ target_link_libraries(pandora_slam_2d_node
     ${catkin_LIBRARIES} 
     pandora_slam_2d
 )
-add_dependencies(pandora_slam_2d_node state_manager_communications_gencpp)
+add_dependencies(pandora_slam_2d_node state_manager_msgs_gencpp)
 
 
 set(ROSLINT_CPP_OPTS 

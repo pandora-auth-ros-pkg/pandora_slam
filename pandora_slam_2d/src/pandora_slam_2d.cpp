@@ -42,8 +42,8 @@ namespace pandora_slam_2d
 PandoraSlam::PandoraSlam(int argc, char **argv): crsmSlam_(argc, argv)
 {
 
-  state_ = state_manager_communications::robotModeMsg::MODE_OFF;
-  prevState_ = state_manager_communications::robotModeMsg::MODE_OFF;
+  state_ = state_manager_msgs::RobotModeMsg::MODE_OFF;
+  prevState_ = state_manager_msgs::RobotModeMsg::MODE_OFF;
   clientInitialize();
 
 }
@@ -59,16 +59,16 @@ void PandoraSlam::startTransition(int newState)
 
   state_ = newState;
 
-  if(state_ == state_manager_communications::robotModeMsg::MODE_TERMINATING)
+  if(state_ == state_manager_msgs::RobotModeMsg::MODE_TERMINATING)
   {
     ROS_ERROR("[Pandora SLAM] Terminating node");
     exit(0);
   }
 
   bool currStateOn = (state_ != 
-                        state_manager_communications::robotModeMsg::MODE_OFF);
+                        state_manager_msgs::RobotModeMsg::MODE_OFF);
   bool prevStateOn = (prevState_ != 
-                        state_manager_communications::robotModeMsg::MODE_OFF);
+                        state_manager_msgs::RobotModeMsg::MODE_OFF);
 
   if(currStateOn && !prevStateOn) {
     crsmSlam_.startLaserSubscriber();
