@@ -39,6 +39,7 @@
 #include <tf/transform_listener.h>
 #include <sensor_msgs/Imu.h>
 #include <string>
+#include <cmath>
 
 #ifndef POSE_ESTIMATION_POSE_ESTIMATION_H
 #define POSE_ESTIMATION_POSE_ESTIMATION_H

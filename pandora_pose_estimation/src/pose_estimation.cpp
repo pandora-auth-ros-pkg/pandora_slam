@@ -181,9 +181,16 @@ namespace pose_estimation
                                                         frameLink_));
   }
 
+  /** @brief PoseEstimation::findDz Computes differential vertical translation in global coords
+   * @param dx Horizontal translation in global coords
+   * @param dy Horizontal translation in global coords
+   * @param roll Rotation around x axis in DEGREES
+   * @param pitch Rotation around y axis in DEGREES
+   */
   double PoseEstimation::findDz(double dx, double dy, double roll, double pitch)
   {
-    // TODO!!!
+    return -tan(pitch*PI/180.0)/cos(roll*PI/180.0)*dx - tan(roll)*dy;
+    //return -tan(pitch)/cos(roll)*dx -tan(roll)*dy;
   }
 
 } // namespace pose_estimation
