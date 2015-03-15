@@ -4,9 +4,9 @@ find_package(catkin REQUIRED COMPONENTS
       roscpp
       tf
       sensor_msgs
+      std_msgs
       roslint
 )
-
 
 catkin_package(
 #  INCLUDE_DIRS include
