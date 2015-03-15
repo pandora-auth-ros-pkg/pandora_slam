@@ -122,7 +122,7 @@ namespace pose_estimation
     poseBroadcastTimer_.start();
     
  //########DEBUG
-	zPub= nh_.advertise<std_msgs::Float64>("z_estimate", 2000);
+	zPub= nh_.advertise<std_msgs::Float64>("/z_estimate", 500);
  //DEBUG########
   }
 
@@ -185,10 +185,10 @@ namespace pose_estimation
                                                         frameLink_));
                                                         
  //########DEBUG
-	std::msgs zMsg;
+	std_msgs::Float64 zMsg;
 	zMsg.data= previousOrigin_.getZ();
 	zPub.publish(zMsg);
-	ROS_ERROR("Footprint_z= %f\n", zMsg.data);
+	ROS_INFO("Footprint_z= %f\n", zMsg.data);
  //DEBUG########
   }
 
@@ -200,7 +200,7 @@ namespace pose_estimation
    */
   double PoseEstimation::findDz(double dx, double dy, double roll, double pitch)
   {
-    return -tan(pitch*PI/180.0)/cos(roll*PI/180.0)*dx - tan(roll)*dy;
+    return -tan(pitch*3.14159/180.0)/cos(roll*3.14159/180.0)*dx - tan(roll)*dy;
     //return -tan(pitch)/cos(roll)*dx -tan(roll)*dy;
   }
 
