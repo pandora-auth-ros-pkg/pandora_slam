@@ -109,7 +109,7 @@ namespace pose_estimation
       FLAT_TO_AXES = 0.145;
     }
 
-    // Maybe it's something else relatively to /map frame
+    // Maybe it's something else relatively to /world frame
     previousOrigin_.setZero();
 
     imuSubscriber_ = nh_.subscribe(imuTopic_,
@@ -120,6 +120,10 @@ namespace pose_estimation
     poseBroadcastTimer_ = nh_.createTimer(
         ros::Duration(1.0/poseFreq_), &PoseEstimation::publishPose, this);
     poseBroadcastTimer_.start();
+    
+ //########DEBUG
+	zPub= nh_.advertise<std_msgs::Float64>("z_estimate", 2000);
+ //DEBUG########
   }
 
   void PoseEstimation::serveImuMessage(const sensor_msgs::ImuConstPtr& msg)
@@ -179,6 +183,13 @@ namespace pose_estimation
                                                         ros::Time::now(),
                                                         frameStabilized_,
                                                         frameLink_));
+                                                        
+ //########DEBUG
+	std::msgs zMsg;
+	zMsg.data= previousOrigin_.getZ();
+	zPub.publish(zMsg);
+	ROS_ERROR("Footprint_z= %f\n", zMsg.data);
+ //DEBUG########
   }
 
   /** @brief PoseEstimation::findDz Computes differential vertical translation in global coords

@@ -38,6 +38,9 @@
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
 #include <sensor_msgs/Imu.h>
+//########DEBUG
+#include "std_msgs/Float64.h"
+//DEBUG########
 #include <string>
 #include <cmath>
 
@@ -82,6 +85,10 @@ namespace pose_estimation
 
     double poseFreq_;
     double FLAT_TO_AXES;
+    
+ //########DEBUG
+	ros::Publisher zPub;
+ //DEBUG########
   };
 
 }  // namespace pose_estimation
