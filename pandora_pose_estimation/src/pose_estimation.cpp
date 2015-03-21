@@ -43,6 +43,7 @@ namespace pose_estimation
 
   PoseEstimation::PoseEstimation(int argc, char **argv)
   {
+    ROS_ERROR("Constructing PoseEstimation...!\n");
     std::string nodeName("[Pandora pose estimation] : ");
 
     if (nh_.hasParam("/pose_estimation/imu_topic")) {
@@ -120,6 +121,7 @@ namespace pose_estimation
     poseBroadcastTimer_ = nh_.createTimer(
         ros::Duration(1.0/poseFreq_), &PoseEstimation::publishPose, this);
     poseBroadcastTimer_.start();
+    ROS_ERROR("Constructed!\n");
   }
 
   void PoseEstimation::serveImuMessage(const sensor_msgs::ImuConstPtr& msg)
@@ -138,9 +140,19 @@ namespace pose_estimation
     rotationZero.setRPY(0, 0, 0);
 
     // Get frame flat
+    ROS_ERROR("Get frame flat...");
     tf::StampedTransform intermediateTf;
-    poseListener_.lookupTransform(frameFlat_, frameMap_,
+    static int firstTime=0;
+    try{
+		poseListener_.lookupTransform(frameFlat_, frameMap_,
         ros::Time::now(), intermediateTf);
+	}catch(tf2::LookupException lookupExc){
+		//Should occur on first access. Set it to identity.
+		if(firstTime++>0) throw lookupExc;
+		ROS_ERROR("LookupException!\n");
+		intermediateTf.setIdentity();
+	}
+    ROS_ERROR("Got it\n");
     tf::Vector3 origin;
     tfScalar pitch, roll, yaw;
     intermediateTf.getBasis().getRPY(roll, pitch, yaw);
@@ -156,6 +168,7 @@ namespace pose_estimation
     previousOrigin_ = origin;
     previousOrigin_.setZ(final_z);
     // Broadcast updated footprint transform
+    ROS_ERROR("Broadcast footprint tf...");
     tf::Vector3 translationZ(0, 0, final_z);
     tf::Transform tfDz(rotationZero, translationZ);
     poseBroadcaster_.sendTransform(tf::StampedTransform(tfDz,
@@ -163,6 +176,7 @@ namespace pose_estimation
                                                         frameFlat_,
                                                         frameFootprint_));
     // Broadcast updated base stabilized
+    ROS_ERROR("Broadcast base_stab tf...");
     tf::Vector3 translationVert(0, 0, FLAT_TO_AXES);
     tf::Transform tfTransformFinal(rotationZero, translationVert);
     poseBroadcaster_.sendTransform(tf::StampedTransform(tfTransformFinal,
@@ -189,6 +203,7 @@ namespace pose_estimation
    */
   double PoseEstimation::findDz(double dx, double dy, double roll, double pitch)
   {
+	ROS_ERROR("findDz");
     return -tan(pitch*PI/180.0)/cos(roll*PI/180.0)*dx - tan(roll)*dy;
     //return -tan(pitch)/cos(roll)*dx -tan(roll)*dy;
   }
