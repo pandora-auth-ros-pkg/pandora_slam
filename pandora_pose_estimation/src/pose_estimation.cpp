@@ -112,7 +112,11 @@ namespace pose_estimation
 
     // Maybe it's something else relatively to /map frame
     previousOrigin_.setZero();
-
+    
+	poseListener_.waitForTransform(frameFlat_, frameMap_,
+	  ros::Time::now(),
+	  ros::Duration(40));
+	
     imuSubscriber_ = nh_.subscribe(imuTopic_,
                                     1,
                                     &PoseEstimation::serveImuMessage,
@@ -142,6 +146,12 @@ namespace pose_estimation
     // Get frame flat
     ROS_ERROR("Get frame flat...");
     tf::StampedTransform intermediateTf;
+    
+    poseListener_.waitForTransform(frameFlat_, frameMap_,
+		ros::Time::now(),
+		ros::Duration(1));
+    /*poseListener_.lookupTransform(frameFlat_, frameMap_,
+        ros::Time::now(), intermediateTf);*/
     static int firstTime=0;
     try{
 		poseListener_.lookupTransform(frameFlat_, frameMap_,
@@ -204,8 +214,7 @@ namespace pose_estimation
   double PoseEstimation::findDz(double dx, double dy, double roll, double pitch)
   {
 	ROS_ERROR("findDz");
-    return -tan(pitch*PI/180.0)/cos(roll*PI/180.0)*dx - tan(roll)*dy;
-    //return -tan(pitch)/cos(roll)*dx -tan(roll)*dy;
+    return -tan(pitch)/cos(roll)*dx -tan(roll)*dy;
   }
 
 } // namespace pose_estimation

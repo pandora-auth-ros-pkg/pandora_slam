@@ -1,5 +1,5 @@
 imu_topic: /sensors/imu
-frame_map: /world
+frame_map: /map
 frame_flat: base_footprint
 frame_footprint: base_footprint_elevated
 frame_stabilized: base_stabilized
