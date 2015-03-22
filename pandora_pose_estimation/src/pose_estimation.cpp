@@ -36,105 +36,64 @@
  *   Author Name <author's email>
  *********************************************************************/
 
-#include "pose_estimation/pose_estimation.h"
+#include <string>
+#include <cmath>
+#include <boost/math/constants/constants.hpp>
 
-namespace pose_estimation
+#include "state_manager_msgs/RobotModeMsg.h"
+
+#include "pandora_pose_estimation/pose_estimation.h"
+
+#define PI boost::math::constants::pi<double>()
+
+namespace pandora_pose_estimation
 {
 
-  PoseEstimation::PoseEstimation(int argc, char **argv)
+  PoseEstimation::PoseEstimation(const std::string& ns): nh_(ns)
   {
-    ROS_ERROR("Constructing PoseEstimation...!\n");
-    std::string nodeName("[Pandora pose estimation] : ");
+    ROS_INFO("[%s] : Constructing PoseEstimation...!",
+        nh_.getNamespace().c_str());
 
-    if (nh_.hasParam("/pose_estimation/imu_topic")) {
-      nh_.getParam("/pose_estimation/imu_topic", imuTopic_);
-    } else {
-      ROS_WARN_STREAM(nodeName <<
-          "Parameter imu_topic not found. Using Default");
-      imuTopic_ = "/sensors/imu";
-    }
-
-    if (nh_.hasParam("/pose_estimation/frame_map")) {
-      nh_.getParam("/pose_estimation/frame_map", frameMap_);
-    } else {
-      ROS_WARN_STREAM(nodeName <<
-          "Parameter frame_map not found. Using Default");
-      frameMap_ = "/map";
-    }
-
-    if (nh_.hasParam("/pose_estimation/frame_flat")) {
-      nh_.getParam("/pose_estimation/frame_flat", frameFlat_);
-    } else {
-      ROS_WARN_STREAM(nodeName <<
-          "Parameter frame_flat not found. Using Default");
-      frameFlat_ = "base_flat_footprint";
-    }
-
-    if (nh_.hasParam("/pose_estimation/frame_footprint")) {
-      nh_.getParam("/pose_estimation/frame_footprint", frameFootprint_);
-    } else {
-      ROS_WARN_STREAM(nodeName <<
-          "Parameter frame_footprint not found. Using Default");
-      frameFootprint_ = "base_footprint";
-    }
-
-    if (nh_.hasParam("/pose_estimation/frame_stabilized")) {
-      nh_.getParam("/pose_estimation/frame_stabilized", frameStabilized_);
-    } else {
-      ROS_WARN_STREAM(nodeName <<
-          "Parameter frame_stabilized not found. Using Default");
-      frameStabilized_ = "base_stabilized";
-    }
-
-    if (nh_.hasParam("/pose_estimation/frame_link")) {
-      nh_.getParam("/pose_estimation/frame_link", frameLink_);
-    } else {
-      ROS_WARN_STREAM(nodeName <<
-          "Parameter frame_link not found. Using Default");
-      frameLink_ = "base_link";
-    }
-
-    if (nh_.hasParam("/pose_estimation/pose_freq")) {
-      nh_.getParam("/pose_estimation/pose_freq", poseFreq_);
-    } else {
-      ROS_WARN_STREAM(nodeName <<
-          "Parameter pose_freq not found. Using Default");
-      poseFreq_ = 5.0;
-    }
-
-    if (nh_.hasParam("/pose_estimation/distance_to_axes")) {
-      nh_.getParam("/pose_estimation/distance_to_axes", FLAT_TO_AXES);
-    } else {
-      ROS_WARN_STREAM(nodeName <<
-          "Parameter flat_to_axes not found. Using Default");
-      FLAT_TO_AXES = 0.145;
-    }
+    nh_.param<std::string>("imu_topic", imuTopic_, "/sensors/imu");
+    nh_.param<std::string>("frame_map", frameMap_, "/world");
+    nh_.param<std::string>("frame_flat", frameFlat_, "/base_footprint");
+    nh_.param<std::string>("frame_footprint", frameFootprint_, "/base_footprint_elevated");
+    nh_.param<std::string>("frame_stabilized", frameStabilized_, "/base_stabilized");
+    nh_.param<std::string>("frame_link", frameLink_, "/base_link");
+    nh_.param<double>("pose_frequency", POSE_FREQ, 5.0);
+    nh_.param<double>("distance_to_axes", FLAT_TO_AXES, 0.145);
 
     // Maybe it's something else relatively to /map frame
     previousOrigin_.setZero();
-    
-	poseListener_.waitForTransform(frameFlat_, frameMap_,
-	  ros::Time::now(),
-	  ros::Duration(40));
-	
-    imuSubscriber_ = nh_.subscribe(imuTopic_,
-                                    1,
-                                    &PoseEstimation::serveImuMessage,
-                                    this);
+
+    imuSubscriber_ = nh_.subscribe(imuTopic_, 1,
+        &PoseEstimation::serveImuMessage, this);
 
     poseBroadcastTimer_ = nh_.createTimer(
-        ros::Duration(1.0/poseFreq_), &PoseEstimation::publishPose, this);
+        ros::Duration(1.0/POSE_FREQ), &PoseEstimation::publishPose, this);
+    currentState_ = state_manager_msgs::RobotModeMsg::MODE_OFF;
+    clientInitialize();
     poseBroadcastTimer_.start();
-    ROS_ERROR("Constructed!\n");
+    ROS_INFO("[%s] : Constructed!", nh_.getNamespace().c_str());
+  }
+
+  void PoseEstimation::startTransition(int newState)
+  {
+    currentState_ = newState;
+    transitionComplete(currentState_);
+  }
+
+  void PoseEstimation::completeTransition()
+  {
   }
 
   void PoseEstimation::serveImuMessage(const sensor_msgs::ImuConstPtr& msg)
   {
-    tf::Matrix3x3 matrix(
-      tf::Quaternion(msg->orientation.x,
-                    msg->orientation.y,
-                    msg->orientation.z,
-                    msg->orientation.w));
+    tf::Matrix3x3 matrix(tf::Quaternion(
+          msg->orientation.x,
+          msg->orientation.y,
+          msg->orientation.z,
+          msg->orientation.w));
     matrix.getRPY(imuRoll_, imuPitch_, imuYaw_);
   }
 
@@ -142,55 +101,54 @@ namespace pose_estimation
   {
     tf::Quaternion rotationZero;
     rotationZero.setRPY(0, 0, 0);
+    ros::Time mostRecentSlam = ros::Time::now();
 
     // Get frame flat
-    ROS_ERROR("Get frame flat...");
-    tf::StampedTransform intermediateTf;
-    
-    poseListener_.waitForTransform(frameFlat_, frameMap_,
-		ros::Time::now(),
-		ros::Duration(1));
-    /*poseListener_.lookupTransform(frameFlat_, frameMap_,
-        ros::Time::now(), intermediateTf);*/
-    static int firstTime=0;
-    try{
-		poseListener_.lookupTransform(frameFlat_, frameMap_,
-        ros::Time::now(), intermediateTf);
-	}catch(tf2::LookupException lookupExc){
-		//Should occur on first access. Set it to identity.
-		if(firstTime++>0) throw lookupExc;
-		ROS_ERROR("LookupException!\n");
-		intermediateTf.setIdentity();
-	}
-    ROS_ERROR("Got it\n");
-    tf::Vector3 origin;
-    tfScalar pitch, roll, yaw;
-    intermediateTf.getBasis().getRPY(roll, pitch, yaw);
-    origin = intermediateTf.getOrigin();
+    if (currentState_ != state_manager_msgs::RobotModeMsg::MODE_OFF) {
+      ROS_INFO("[%s] : Get frame flat...", nh_.getNamespace().c_str());
+      tf::StampedTransform intermediateTf;
+      poseListener_.waitForTransform(frameFlat_, frameMap_,
+          mostRecentSlam, ros::Duration(1.0/POSE_FREQ));
+      poseListener_.lookupTransform(frameFlat_, frameMap_,
+          mostRecentSlam, intermediateTf);
+      ROS_INFO("[%s] : Got it!", nh_.getNamespace().c_str());
+      tf::Vector3 origin;
+      tfScalar pitch, roll, yaw;
+      intermediateTf.getBasis().getRPY(roll, pitch, yaw);
+      origin = intermediateTf.getOrigin();
 
-    // Get difference in x and y
-    double dx, dy, final_z;
-    dx = origin.getX() - previousOrigin_.getX();
-    dy = origin.getY() - previousOrigin_.getY();
-    // Find difference in z
-    final_z = findDz(dx, dy, imuRoll_, imuPitch_) + previousOrigin_.getZ();
-    // Update previousOrigin_
-    previousOrigin_ = origin;
-    previousOrigin_.setZ(final_z);
-    // Broadcast updated footprint transform
-    ROS_ERROR("Broadcast footprint tf...");
-    tf::Vector3 translationZ(0, 0, final_z);
-    tf::Transform tfDz(rotationZero, translationZ);
-    poseBroadcaster_.sendTransform(tf::StampedTransform(tfDz,
-                                                        ros::Time::now(),
-                                                        frameFlat_,
-                                                        frameFootprint_));
+      // Get difference in x and y
+      double dx, dy, final_z;
+      dx = origin.getX() - previousOrigin_.getX();
+      dy = origin.getY() - previousOrigin_.getY();
+      // Find difference in z
+      final_z = findDz(dx, dy, imuRoll_, imuPitch_) + previousOrigin_.getZ();
+      // Update previousOrigin_
+      previousOrigin_ = origin;
+      previousOrigin_.setZ(final_z);
+      // Broadcast updated footprint transform
+      ROS_INFO("[%s] : Broadcast footprint tf...", nh_.getNamespace().c_str());
+      tf::Vector3 translationZ(0, 0, final_z);
+      tf::Transform tfDz(rotationZero, translationZ);
+      poseBroadcaster_.sendTransform(tf::StampedTransform(tfDz,
+                                                          mostRecentSlam,
+                                                          frameFlat_,
+                                                          frameFootprint_));
+    }
+    else {
+      tf::Transform tfDz(rotationZero, tf::Vector3(0, 0, 0));
+      poseBroadcaster_.sendTransform(tf::StampedTransform(tfDz,
+                                                          mostRecentSlam,
+                                                          frameFlat_,
+                                                          frameFootprint_));
+    }
+
     // Broadcast updated base stabilized
-    ROS_ERROR("Broadcast base_stab tf...");
+    ROS_INFO("[%s] : Broadcast base_stab tf...", nh_.getNamespace().c_str());
     tf::Vector3 translationVert(0, 0, FLAT_TO_AXES);
     tf::Transform tfTransformFinal(rotationZero, translationVert);
     poseBroadcaster_.sendTransform(tf::StampedTransform(tfTransformFinal,
-                                                        ros::Time::now(),
+                                                        mostRecentSlam,
                                                         frameFootprint_,
                                                         frameStabilized_));
 
@@ -200,7 +158,7 @@ namespace pose_estimation
     // base_stabilized -> base_link
     tf::Transform tfTransformFinal2(rotation, translationZero);
     poseBroadcaster_.sendTransform(tf::StampedTransform(tfTransformFinal2,
-                                                        ros::Time::now(),
+                                                        mostRecentSlam,
                                                         frameStabilized_,
                                                         frameLink_));
   }
@@ -213,8 +171,9 @@ namespace pose_estimation
    */
   double PoseEstimation::findDz(double dx, double dy, double roll, double pitch)
   {
-	ROS_ERROR("findDz");
-    return -tan(pitch)/cos(roll)*dx -tan(roll)*dy;
+	  ROS_INFO("[%s] : FindDz...", nh_.getNamespace().c_str());
+    return -tan(pitch*PI/180.0)/cos(roll*PI/180.0)*dx - tan(roll)*dy;
+    //return -tan(pitch)/cos(roll)*dx -tan(roll)*dy;
   }
 
-} // namespace pose_estimation
+} // namespace pandora_pose_estimation

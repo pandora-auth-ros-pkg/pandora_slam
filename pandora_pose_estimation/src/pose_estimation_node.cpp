@@ -36,15 +36,15 @@
  *   Author Name <author's email>
  *********************************************************************/
 
-#include <ros/ros.h>
+#include <ros/init.h>
 
-#include "pose_estimation/pose_estimation.h"
+#include "pandora_pose_estimation/pose_estimation.h"
 
-int main (int argc, char **argv) {
-  ros::init(argc, argv, "pose_estimation_node",
-      ros::init_options::NoSigintHandler);
-  pose_estimation::PoseEstimation poseEstimation(argc, argv);
-  ROS_DEBUG("Pandora pose estimation node initialised");
+int main (int argc, char **argv)
+{
+  ros::init(argc, argv, "pose_estimation", ros::init_options::NoSigintHandler);
+  pandora_pose_estimation::PoseEstimation poseEstimation("pandora_pose_estimation");
+  ROS_INFO("[PANDORA_POSE_ESTIMATION] Node initialised.");
   ros::spin();
   return 0;
 }
