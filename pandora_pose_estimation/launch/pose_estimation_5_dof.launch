@@ -1,4 +1,4 @@
 <launch>
-	<node name="pose_estimation_node" type="pose_estimation_node" pkg="pandora_pose_estimation" ns="pandora_localization"/>
-	<rosparam file="$(find pandora_pose_estimation)/config/pose_estimation_5_dof/params.yaml" command="load" ns="pose_estimation"/>
+  <node name="pose_estimation_node" type="pose_estimation_node" pkg="pandora_pose_estimation" output="screen" />
+	<rosparam file="$(find pandora_pose_estimation)/config/pandora_pose_estimation/params.yaml" command="load" ns="pandora_pose_estimation"/>
 </launch>
