@@ -44,8 +44,6 @@
 
 #include "pandora_pose_estimation/pose_estimation.h"
 
-#define PI boost::math::constants::pi<double>()
-
 namespace pandora_pose_estimation
 {
 
@@ -166,14 +164,13 @@ namespace pandora_pose_estimation
   /** @brief PoseEstimation::findDz Computes differential vertical translation in global coords
    * @param dx Horizontal translation in global coords
    * @param dy Horizontal translation in global coords
-   * @param roll Rotation around x axis in DEGREES
-   * @param pitch Rotation around y axis in DEGREES
+   * @param roll Rotation around x axis in RAD
+   * @param pitch Rotation around y axis in RAD
    */
   double PoseEstimation::findDz(double dx, double dy, double roll, double pitch)
   {
-	  ROS_INFO("[%s] : FindDz...", nh_.getNamespace().c_str());
-    return -tan(pitch*PI/180.0)/cos(roll*PI/180.0)*dx - tan(roll)*dy;
-    //return -tan(pitch)/cos(roll)*dx -tan(roll)*dy;
+    ROS_INFO("[%s] : FindDz...", nh_.getNamespace().c_str());
+    return tan(pitch)/cos(roll)*dx -tan(roll)*dy;
   }
 
 } // namespace pandora_pose_estimation

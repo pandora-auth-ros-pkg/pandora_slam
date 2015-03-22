@@ -4,5 +4,5 @@ frame_flat: base_footprint
 frame_footprint: base_footprint_elevated
 frame_stabilized: base_stabilized
 frame_link: base_link
-pose_frequency: 5.0
+pose_frequency: 4.0
 distance_to_axes: 0.145

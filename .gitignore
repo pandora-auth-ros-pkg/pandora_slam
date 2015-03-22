@@ -25,6 +25,7 @@ bags/
 *.o
 *.so
 *.pyc
+*~
 
 # OS generated files #
 ######################
