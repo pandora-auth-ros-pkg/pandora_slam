@@ -32,22 +32,22 @@ include_directories(
 
 ############ pandora_slam_2d ##############
 
-add_library(${PROJECT_NAME}_pandora_slam_2d
+add_library(${PROJECT_NAME}
   src/pandora_slam_2d.cpp)
-target_link_libraries(${PROJECT_NAME}_pandora_slam_2d
+target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
   )
 
 ############## pandora_slam_2d_node ##############
 
-add_executable(${PROJECT_NAME}_pandora_slam_2d_node
+add_executable(${PROJECT_NAME}_node
   src/pandora_slam_2d_node.cpp)
-target_link_libraries(${PROJECT_NAME}_pandora_slam_2d_node
+target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}
-  ${PROJECT_NAME}_pandora_slam_2d
-)
-add_dependencies(${PROJECT_NAME}_pandora_slam_2d_node
-  state_manager_msgs_gencpp
+  ${PROJECT_NAME}
+  )
+add_dependencies(${PROJECT_NAME}_node
+  ${catkin_EXPORTED_TARGETS}
   )
 
 ######################## roslint ###############
