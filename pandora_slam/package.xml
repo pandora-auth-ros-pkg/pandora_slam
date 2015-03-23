@@ -1,8 +1,7 @@
-<?xml version="1.0"?>
-<package>
+<package format="2">
   <name>pandora_slam</name>
   <version>0.1.0</version>
-  <description>Containts slam algorithm implementations.</description>
+  <description>Containts slam algorithm implementations</description>
 
   <maintainer email="etsardou@gmail.com">Manos Tsardoulias</maintainer>
 
@@ -15,10 +14,9 @@
   
   <buildtool_depend>catkin</buildtool_depend>
   
-  
-  <run_depend>pandora_slam_2d</run_depend>
-  <run_depend>pandora_slam_3d</run_depend>
-  <run_depend>pandora_pose_estimation</run_depend>
+  <exec_depend>pandora_slam_2d</exec_depend>
+  <exec_depend>pandora_slam_3d</exec_depend>
+  <exec_depend>pandora_pose_estimation</exec_depend>
     
   <export>
     <metapackage/>
