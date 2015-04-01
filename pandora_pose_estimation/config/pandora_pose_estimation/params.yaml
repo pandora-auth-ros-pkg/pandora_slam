@@ -1,8 +1,8 @@
 imu_topic: /sensors/imu
 frame_map: /world
-frame_flat: base_footprint
-frame_footprint: base_footprint_elevated
+frame_footprint: base_footprint
+frame_footprint_elevated: base_footprint_elevated
 frame_stabilized: base_stabilized
 frame_link: base_link
-pose_frequency: 4.0
+pose_frequency: 7.0
 distance_to_axes: 0.145

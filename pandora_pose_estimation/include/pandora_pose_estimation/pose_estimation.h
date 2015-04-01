@@ -40,10 +40,10 @@
 
 #include <string>
 
-#include <ros/time.h>
-#include <tf/transform_broadcaster.h>
-#include <tf/transform_listener.h>
-#include <sensor_msgs/Imu.h>
+#include "ros/time.h"
+#include "tf/transform_broadcaster.h"
+#include "tf/transform_listener.h"
+#include "sensor_msgs/Imu.h"
 
 #include "state_manager/state_client.h"
 
@@ -72,8 +72,8 @@ namespace pandora_pose_estimation
     std::string imuTopic_;
 
     std::string frameMap_;
-    std::string frameFlat_;
     std::string frameFootprint_;
+    std::string frameFootprintElevated_;
     std::string frameStabilized_;
     std::string frameLink_;
 

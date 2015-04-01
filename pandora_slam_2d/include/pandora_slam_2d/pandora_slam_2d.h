@@ -39,7 +39,7 @@
 #define PANDORA_SLAM_2D_PANDORA_SLAM_2D_H
 
 #include "state_manager/state_client.h"
-#include <crsm_slam/crsm_slam.h>
+#include "crsm_slam/crsm_slam.h"
 
 namespace pandora_slam_2d
 {
