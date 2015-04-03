@@ -41,11 +41,10 @@ namespace pandora_slam_2d
 
 PandoraSlam::PandoraSlam(int argc, char **argv): crsmSlam_(argc, argv)
 {
-
   state_ = state_manager_msgs::RobotModeMsg::MODE_OFF;
   prevState_ = state_manager_msgs::RobotModeMsg::MODE_OFF;
   clientInitialize();
-
+  ROS_INFO("[pandora_slam_2d] Pandora Slam 2D constructed");
 }
 
 
@@ -56,7 +55,7 @@ PandoraSlam::PandoraSlam(int argc, char **argv): crsmSlam_(argc, argv)
 **/
 void PandoraSlam::startTransition(int newState)
 {
-
+  ROS_ERROR("[pandora_slam_2d] Start Transition");
   state_ = newState;
 
   if(state_ == state_manager_msgs::RobotModeMsg::MODE_TERMINATING)
@@ -72,10 +71,12 @@ void PandoraSlam::startTransition(int newState)
 
   if(currStateOn && !prevStateOn) {
     crsmSlam_.startLaserSubscriber();
+    crsmSlam_.startIMUSubscriber();
     crsmSlam_.startOGMPublisher();
     crsmSlam_.startTrajectoryPublisher();
   } else if(!currStateOn && prevStateOn) {
     crsmSlam_.stopLaserSubscriber();
+    crsmSlam_.stopIMUSubscriber();
     crsmSlam_.stopOGMPublisher();
     crsmSlam_.stopTrajectoryPublisher();
   }
