@@ -54,8 +54,8 @@ namespace pandora_pose_estimation
 
     nh_.param<std::string>("imu_topic", imuTopic_, "/sensors/imu");
     nh_.param<std::string>("frame_map", frameMap_, "/world");
-    nh_.param<std::string>("frame_flat", frameFootprint_, "/base_footprint");
-    nh_.param<std::string>("frame_footprint", frameFootprintElevated_, "/base_footprint_elevated");
+    nh_.param<std::string>("frame_footprint", frameFootprint_, "/base_footprint");
+    nh_.param<std::string>("frame_footprint_elevated", frameFootprintElevated_, "/base_footprint_elevated");
     nh_.param<std::string>("frame_stabilized", frameStabilized_, "/base_stabilized");
     nh_.param<std::string>("frame_link", frameLink_, "/base_link");
     nh_.param<double>("pose_frequency", POSE_FREQ, 5.0);
@@ -72,7 +72,6 @@ namespace pandora_pose_estimation
     currentState_ = state_manager_msgs::RobotModeMsg::MODE_OFF;
     clientInitialize();
     poseBroadcastTimer_.start();
-    ROS_INFO("[%s] : Constructed!", nh_.getNamespace().c_str());
   }
 
   void PoseEstimation::startTransition(int newState)
@@ -99,17 +98,14 @@ namespace pandora_pose_estimation
   {
     tf::Quaternion rotationZero;
     rotationZero.setRPY(0, 0, 0);
-    ros::Time mostRecentSlam = ros::Time::now();
 
     // Get frame flat
     if (currentState_ != state_manager_msgs::RobotModeMsg::MODE_OFF) {
-      ROS_INFO("[%s] : Get frame flat...", nh_.getNamespace().c_str());
       tf::StampedTransform intermediateTf;
       poseListener_.waitForTransform(frameFootprint_, frameMap_,
-          mostRecentSlam, ros::Duration(1.0/POSE_FREQ));
+          ros::Time::now(), ros::Duration(1.0/POSE_FREQ));
       poseListener_.lookupTransform(frameFootprint_, frameMap_,
-          mostRecentSlam, intermediateTf);
-      ROS_INFO("[%s] : Got it!", nh_.getNamespace().c_str());
+          ros::Time(0), intermediateTf);
       tf::Vector3 origin;
       tfScalar pitch, roll, yaw;
       intermediateTf.getBasis().getRPY(roll, pitch, yaw);
@@ -125,28 +121,26 @@ namespace pandora_pose_estimation
       previousOrigin_ = origin;
       previousOrigin_.setZ(final_z);
       // Broadcast updated footprint transform
-      ROS_INFO("[%s] : Broadcast footprint tf...", nh_.getNamespace().c_str());
       tf::Vector3 translationZ(0, 0, final_z);
       tf::Transform tfDz(rotationZero, translationZ);
       poseBroadcaster_.sendTransform(tf::StampedTransform(tfDz,
-                                                          mostRecentSlam,
+                                                          ros::Time::now(),
                                                           frameFootprint_,
                                                           frameFootprintElevated_));
     }
     else {
       tf::Transform tfDz(rotationZero, tf::Vector3(0, 0, 0));
       poseBroadcaster_.sendTransform(tf::StampedTransform(tfDz,
-                                                          mostRecentSlam,
+                                                          ros::Time::now(),
                                                           frameFootprint_,
                                                           frameFootprintElevated_));
     }
 
     // Broadcast updated base stabilized
-    ROS_INFO("[%s] : Broadcast base_stab tf...", nh_.getNamespace().c_str());
     tf::Vector3 translationVert(0, 0, FLAT_TO_AXES);
     tf::Transform tfTransformFinal(rotationZero, translationVert);
     poseBroadcaster_.sendTransform(tf::StampedTransform(tfTransformFinal,
-                                                        mostRecentSlam,
+                                                        ros::Time::now(),
                                                         frameFootprintElevated_,
                                                         frameStabilized_));
 
@@ -156,7 +150,7 @@ namespace pandora_pose_estimation
     // base_stabilized -> base_link
     tf::Transform tfTransformFinal2(rotation, translationZero);
     poseBroadcaster_.sendTransform(tf::StampedTransform(tfTransformFinal2,
-                                                        mostRecentSlam,
+                                                        ros::Time::now(),
                                                         frameStabilized_,
                                                         frameLink_));
   }
@@ -169,7 +163,6 @@ namespace pandora_pose_estimation
    */
   double PoseEstimation::findDz(double dx, double dy, double roll, double pitch)
   {
-    ROS_INFO("[%s] : FindDz...", nh_.getNamespace().c_str());
     return tan(pitch)/cos(roll)*dx -tan(roll)*dy;
   }
 
