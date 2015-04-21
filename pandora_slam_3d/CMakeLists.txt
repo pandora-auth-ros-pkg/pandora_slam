@@ -11,11 +11,11 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   dynamic_reconfigure
   roslint
-  pandora_vision_hole_detector
+  pandora_vision_hole
 )
 
-set(CMAKE_BUILD_TYPE Release)
-#~ set(CMAKE_BUILD_TYPE Debug)
+# set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE Debug)
 
 generate_dynamic_reconfigure_options(
   cfg/point_cloud_subsampler.cfg)

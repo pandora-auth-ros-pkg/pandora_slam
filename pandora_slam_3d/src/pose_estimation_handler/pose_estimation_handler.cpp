@@ -58,20 +58,15 @@ namespace pandora_slam
     node_handle_.param<std::string>("pose_estimation_handler/imu_topic",
       imu_topic, "");
 
-    if (imu_topic != "")
-    {
+    if (imu_topic != "") {
       imu_subscriber_ = node_handle_.subscribe(
         imu_topic, 1,
         &PoseEstimationHandler::imuCallback, this);
-    }
-    else if (visual_odometry_topic != "")
-    {
+    } else if (visual_odometry_topic != "") {
       visual_odometry_subscriber_ = node_handle_.subscribe(
         visual_odometry_topic, 1,
         &PoseEstimationHandler::visualOdometryCallback, this);
-    }
-    else
-    {
+    } else {
       cloud_subscriber_ = node_handle_.subscribe(
         cloud_topic, 1,
         &PoseEstimationHandler::cloudCallback, this);

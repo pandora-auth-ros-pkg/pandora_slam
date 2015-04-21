@@ -92,6 +92,7 @@ namespace pandora_slam
   {
   }
 
+  // TODO: Should use PointCloudSubsampler::voxelFilter
   void MatchingOctomapServer::filterAndPublishCloud(
     const sensor_msgs::PointCloud2::ConstPtr& input_cloud_ptr)
   {
