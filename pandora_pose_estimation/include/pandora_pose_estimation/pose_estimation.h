@@ -39,13 +39,19 @@
 #define PANDORA_POSE_ESTIMATION_POSE_ESTIMATION_H
 
 #include <string>
+#include <cmath>
+#include <boost/math/constants/constants.hpp>
 
 #include "ros/time.h"
 #include "tf/transform_broadcaster.h"
 #include "tf/transform_listener.h"
 #include "sensor_msgs/Imu.h"
 
+//DEBUG z
+#include "std_msgs/Float64MultiArray.h"
+
 #include "state_manager/state_client.h"
+#include "state_manager_msgs/RobotModeMsg.h"
 
 namespace pandora_pose_estimation
 {
@@ -79,14 +85,17 @@ namespace pandora_pose_estimation
 
     tf::Vector3 previousOrigin_;
 
-    double imuYaw_;
-    double imuPitch_;
-    double imuRoll_;
+    double imuYaw_, imuPitch_, imuRoll_;
+    double avgPitch_, avgRoll_;
+    int imuMsgCount_;
 
     int currentState_;
 
     double POSE_FREQ;
     double FLAT_TO_AXES;
+
+    //DEBUG z
+    ros::Publisher zTransPub_;
   };
 
 }  // namespace pandora_pose_estimation

@@ -7,7 +7,8 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   roslint
   state_manager
-  )
+  std_msgs
+)
 
 
 catkin_package(
@@ -17,6 +18,7 @@ catkin_package(
     sensor_msgs
     roslint
     state_manager
+    std_msgs
   )
 
 include_directories(

@@ -36,12 +36,6 @@
  *   Author Name <author's email>
  *********************************************************************/
 
-#include <string>
-#include <cmath>
-#include <boost/math/constants/constants.hpp>
-
-#include "state_manager_msgs/RobotModeMsg.h"
-
 #include "pandora_pose_estimation/pose_estimation.h"
 
 namespace pandora_pose_estimation
@@ -66,6 +60,10 @@ namespace pandora_pose_estimation
 
     imuSubscriber_ = nh_.subscribe(imuTopic_, 1,
         &PoseEstimation::serveImuMessage, this);
+
+    //DEBUG z
+    zTransPub_= nh_.advertise<std_msgs::Float64MultiArray>("/slam/z_est", 10);
+    avgPitch_=0, avgRoll_=0, imuMsgCount_=0;
 
     poseBroadcastTimer_ = nh_.createTimer(
         ros::Duration(1.0/POSE_FREQ), &PoseEstimation::publishPose, this);
@@ -92,6 +90,7 @@ namespace pandora_pose_estimation
           msg->orientation.z,
           msg->orientation.w));
     matrix.getRPY(imuRoll_, imuPitch_, imuYaw_);
+    avgPitch_+= imuPitch_, avgRoll_+= imuRoll_, imuMsgCount_++;
   }
 
   void PoseEstimation::publishPose(const ros::TimerEvent&)
@@ -116,7 +115,8 @@ namespace pandora_pose_estimation
       dx = origin.getX() - previousOrigin_.getX();
       dy = origin.getY() - previousOrigin_.getY();
       // Find difference in z
-      final_z = findDz(dx, dy, imuRoll_, imuPitch_) + previousOrigin_.getZ();
+      final_z = findDz(dx, dy, avgRoll_/imuMsgCount_, avgPitch_/imuMsgCount_) + previousOrigin_.getZ();
+      avgPitch_=0, avgRoll_=0, imuMsgCount_=0;
       // Update previousOrigin_
       previousOrigin_ = origin;
       previousOrigin_.setZ(final_z);
@@ -124,16 +124,30 @@ namespace pandora_pose_estimation
       tf::Vector3 translationZ(0, 0, final_z);
       tf::Transform tfDz(rotationZero, translationZ);
       poseBroadcaster_.sendTransform(tf::StampedTransform(tfDz,
-                                                          ros::Time::now(),
-                                                          frameFootprint_,
-                                                          frameFootprintElevated_));
+                                                        ros::Time::now(),
+                                                        frameFootprint_,
+                                                        frameFootprintElevated_));
+
+      //DEBUG z
+      std_msgs::Float64MultiArray zMsg;
+      std_msgs::MultiArrayLayout layout; std_msgs::MultiArrayDimension dim;
+      dim.label="1"; dim.size=6; dim.stride=6;
+      layout.dim.push_back(/*MultiArrayDimension*/dim);
+      zMsg.layout= layout;
+      zMsg.data.push_back(/*float*/final_z);
+      zMsg.data.push_back(/*float*/dx);
+      zMsg.data.push_back(/*float*/dy);
+      zMsg.data.push_back(/*float*/imuRoll_);
+      zMsg.data.push_back(/*float*/imuPitch_);
+      zMsg.data.push_back(ros::Time::now().toSec());
+      zTransPub_.publish(zMsg);
     }
     else {
       tf::Transform tfDz(rotationZero, tf::Vector3(0, 0, 0));
       poseBroadcaster_.sendTransform(tf::StampedTransform(tfDz,
-                                                          ros::Time::now(),
-                                                          frameFootprint_,
-                                                          frameFootprintElevated_));
+                                                        ros::Time::now(),
+                                                        frameFootprint_,
+                                                        frameFootprintElevated_));
     }
 
     // Broadcast updated base stabilized
@@ -163,7 +177,7 @@ namespace pandora_pose_estimation
    */
   double PoseEstimation::findDz(double dx, double dy, double roll, double pitch)
   {
-    return tan(pitch)/cos(roll)*dx -tan(roll)*dy;
+    return tan(pitch)/cos(roll)*dx +tan(roll)*dy;
   }
 
 } // namespace pandora_pose_estimation
