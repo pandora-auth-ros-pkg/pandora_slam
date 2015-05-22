@@ -38,8 +38,9 @@
 #ifndef PANDORA_POSE_ESTIMATION_POSE_ESTIMATION_H
 #define PANDORA_POSE_ESTIMATION_POSE_ESTIMATION_H
 
-#include <string>
 #include <cmath>
+#include <string>
+#include <deque>
 #include <boost/math/constants/constants.hpp>
 
 #include "ros/time.h"
@@ -66,7 +67,9 @@ namespace pandora_pose_estimation
     void completeTransition();
 
    private:
-    double findDz(double dx, double dy, double roll, double pitch);
+    double findDz(double dx, double dy);
+    double linInterp(double past, double current, int steps);
+    double dz(double dx, double dy, double roll, double pitch);
 
    private:
     ros::NodeHandle nh_;
@@ -83,19 +86,22 @@ namespace pandora_pose_estimation
     std::string frameStabilized_;
     std::string frameLink_;
 
-    tf::Vector3 previousOrigin_;
+    tf::Transform previousTf_;
 
-    double imuYaw_, imuPitch_, imuRoll_;
-    double avgPitch_, avgRoll_;
-    int imuMsgCount_;
+    double latestYaw_, latestPitch_, latestRoll_;
+    double *onExpFilt_;
+
+    //!< IMU && SLAM history
+    std::deque<double> pitchQ_, rollQ_, dxQ_, dyQ_;
 
     int currentState_;
 
-    double POSE_FREQ;
-    double FLAT_TO_AXES;
+    double POSE_FREQ, FLAT_TO_AXES;
+    int FILTER_LENGTH, IMU_INTERP_STEPS;
 
     //DEBUG z
     ros::Publisher zTransPub_;
+    ros::Publisher imuPub_;
   };
 
 }  // namespace pandora_pose_estimation
