@@ -1,0 +1,10 @@
+imu_topic: /sensors/imu
+frame_map: /world
+frame_footprint: base_footprint
+frame_footprint_elevated: base_footprint_elevated
+frame_stabilized: base_stabilized
+frame_link: base_link
+pose_frequency: 25.0
+distance_to_axes: 0.145
+IMU_interpolation_steps: 5
+SLAM_exp_filter_length: 1

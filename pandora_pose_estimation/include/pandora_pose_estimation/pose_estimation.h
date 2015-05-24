@@ -32,57 +32,78 @@
 *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 *  POSSIBILITY OF SUCH DAMAGE.
 *
-* Author: Manos Tsardoulias
+* Author: Chris Zalidis
 *********************************************************************/
 
-#ifndef PANDORA_SLAM_2D_PANDORA_SLAM_2D_H
-#define PANDORA_SLAM_2D_PANDORA_SLAM_2D_H
+#ifndef PANDORA_POSE_ESTIMATION_POSE_ESTIMATION_H
+#define PANDORA_POSE_ESTIMATION_POSE_ESTIMATION_H
+
+#include <cmath>
+#include <string>
+#include <deque>
+#include <boost/math/constants/constants.hpp>
+
+#include "ros/time.h"
+#include "tf/transform_broadcaster.h"
+#include "tf/transform_listener.h"
+#include "sensor_msgs/Imu.h"
+
+//DEBUG z
+#include "std_msgs/Float64MultiArray.h"
 
 #include "state_manager/state_client.h"
-#include "crsm_slam/crsm_slam.h"
+#include "state_manager_msgs/RobotModeMsg.h"
 
-namespace pandora_slam_2d
+namespace pandora_pose_estimation
 {
+  class PoseEstimation: public StateClient
+  {
+   public:
+    PoseEstimation(const std::string& ns);
+    void serveImuMessage(const sensor_msgs::ImuConstPtr& msg);
+    void publishPose(const ros::TimerEvent&);
 
-/**
- @class Slam
- @brief The main slam class. Contains the main functionalities of slam.
- **/
-class PandoraSlam : public StateClient
-{
- private:
+    void startTransition(int newState);
+    void completeTransition();
 
-  int state_;
-  int prevState_;
+   private:
+    double findDz(double dx, double dy);
+    double linInterp(double past, double current, int steps);
+    double dz(double dx, double dy, double roll, double pitch);
 
-  crsm_slam::CrsmSlam crsmSlam_;
+   private:
+    ros::NodeHandle nh_;
 
- public:
-  /**
-  @brief Default costructor
-  @param argc [int] The number of input arguments
-  @param argv [char **] The input arguments
-  @return void
-  **/
-  PandoraSlam(int argc, char **argv);
+    tf::TransformBroadcaster poseBroadcaster_;
+    tf::TransformListener poseListener_;
+    ros::Timer poseBroadcastTimer_;
+    ros::Subscriber imuSubscriber_;
+    std::string imuTopic_;
 
-  /**
-  @brief Implemented from StateClient. Called when the robot state changes
-  @param newState type: int
-  @return void
-  **/
-  void startTransition(int newState);
+    std::string frameMap_;
+    std::string frameFootprint_;
+    std::string frameFootprintElevated_;
+    std::string frameStabilized_;
+    std::string frameLink_;
 
-  /**
-  @brief Implements the state transition end. Inherited from State client.
-  @return void
-  **/
-  void completeTransition(void);
+    tf::Transform previousTf_;
 
-};
+    double latestYaw_, latestPitch_, latestRoll_;
+    double *onExpFilt_;
 
-} // namespace pandora_slam_2d
+    //!< IMU && SLAM history
+    std::deque<double> pitchQ_, rollQ_, dxQ_, dyQ_;
 
+    int currentState_;
 
-#endif  // PANDORA_SLAM_2D_PANDORA_SLAM_2D_H
+    double POSE_FREQ, FLAT_TO_AXES;
+    int FILTER_LENGTH, IMU_INTERP_STEPS;
 
+    //DEBUG z
+    ros::Publisher zTransPub_;
+    ros::Publisher imuPub_;
+  };
+
+}  // namespace pandora_pose_estimation
+
+#endif  // PANDORA_POSE_ESTIMATION_POSE_ESTIMATION_H
