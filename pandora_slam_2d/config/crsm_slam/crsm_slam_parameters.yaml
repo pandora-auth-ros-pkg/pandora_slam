@@ -25,7 +25,7 @@ map_update_obstacle_density : 3.0
 scan_density_lower_boundary : 0.3
 # max_hill_climbing_iterations : 40000
 max_hill_climbing_iterations : 40000
-desired_number_of_picked_rays : 50
+desired_number_of_picked_rays : 40
 
 #~ Publishing frequencies (Hz)
 
@@ -35,5 +35,10 @@ trajectory_freq : 1.0
 
 #~ Robot parameters: Woody
 
-robot_width : 0.41
-robot_length : 0.53
+# robot_width : 0.41
+# robot_length : 0.53
+
+#~ Robot parameters: Gears
+
+robot_width : 0.6
+robot_length : 0.75
