@@ -26,7 +26,9 @@
   <run_depend>state_manager_msgs</run_depend>
   <run_depend>diagnostic_updater</run_depend>
   <run_depend version_gte="1.0.3">crsm_slam</run_depend> 
-  <run_depend>hokuyo_node</run_depend> 
+  <run_depend>hokuyo_node</run_depend>
+  <run_depend>urg_node</run_depend>
+  <run_depend>rplidar_ros</run_depend> 
   <run_depend>roslint</run_depend> 
   
   <export>
