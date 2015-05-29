@@ -1,0 +1,11 @@
+<launch>
+  <node name="hokuyo_laser" pkg="urg_node" type="urg_node" respawn="false">
+    <param name="frame_id" type="string" value="laser_link"/>
+    <param name="ip_address" type="string" value="10.1.1.3"/>
+    <param name="ip_port" type="string" value="10940"/> 
+    <param name="min_ang" type="double" value="-2.3562"/>
+    <param name="max_ang" type="double" value="2.3562"/>
+
+    <remap from="scan" to="laser/scan"/>
+  </node>
+</launch>
