@@ -6,5 +6,5 @@ frame_stabilized: base_stabilized
 frame_link: base_link
 pose_frequency: 25.0
 distance_to_axes: 0.145
-IMU_interpolation_steps: 5
 SLAM_exp_filter_length: 1
+probability_filter_measurement_decay_rate: 292

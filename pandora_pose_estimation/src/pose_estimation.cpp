@@ -57,7 +57,8 @@ namespace pandora_pose_estimation
     nh_.param<double>("pose_frequency", POSE_FREQ, 5.0);
     nh_.param<double>("distance_to_axes", FLAT_TO_AXES, 0.145);
     nh_.param<int>("SLAM_exp_filter_length", FILTER_LENGTH, 8);
-    nh_.param<int>("IMU_interpolation_steps", IMU_INTERP_STEPS, 6);
+    nh_.param<double>("probability_filter_measurement_decay_rate",
+                      PROBFILT_DECAY, 292);
 
     // Initialize exponential decay filter
     double rate, normalizeSum= 0;
@@ -230,28 +231,38 @@ namespace pandora_pose_estimation
    */
   double PoseEstimation::findDz(double dx, double dy)
   {
-    int totalSteps= (pitchQ_.size()-1)*IMU_INTERP_STEPS;
+    //rollQ && pitchQ certainly have the same size
+    //Check starting condition: possibly 1 or 2 elts in the Q
+    while(pitchQ_.size()<3){
+      pitchQ_.push_back(pitchQ_.front());
+      rollQ_.push_back(rollQ_.front());
+    }
+    //Q size at least 3
+    int steps= (pitchQ_.size()-1);
     double sum_dz= 0, pastRoll, pastPitch, stepRoll, stepPitch;
 
     // Newest measurements at the front of the queue!
     dxQ_.push_front(dx);
     dyQ_.push_front(dy);
-    // Accumulators
-    double dxAccum= 0, dyAccum= 0;
-    std::deque<double>::iterator ix= dxQ_.begin(), iy= dyQ_.begin();
-    for(int i= 0; i< FILTER_LENGTH && ix!= dxQ_.end(); i++, ix++, iy++)
-      dxAccum+= (*ix)*onExpFilt_[i], dyAccum+= (*iy)*onExpFilt_[i];
-    dxQ_.front()= dxAccum, dyQ_.front()= dyAccum;
+    //Filter incoming roll,pitch | dx,dy
+    double pastRoll2, pastPitch2;
+    std::deque<double>::iterator pitchit= pitchQ_.begin(), rollit= rollQ_.begin();
+    pastPitch= *pitchit, pastRoll= *rollit;
+    pitchit++, rollit++;
+    pastPitch2= *pitchit, pastRoll2= *rollit;
+    //Linear extrapolation ASSUMING constant frequency
+    do{
+      *pitchit= probFilt(2*pastPitch2-pastPitch, *pitchit);
+      *rollit= probFilt(2*pastRoll2-pastRoll, *rollit);
+      pitchit++, rollit++;
+    } while(pitchit!= pitchQ_.end());
+    //Take elts from Qs in older-first order
     //Leave 1 element in queue as starting point for next loop
-    //TODO(lynx): exp filter IMU
-    while(pitchQ_.size()> 1){
+    while(pitchQ_.size()> 2){
       pastRoll= rollQ_.front(); rollQ_.pop_front();
       pastPitch= pitchQ_.front(); pitchQ_.pop_front();
-      stepRoll= linInterp(pastRoll, rollQ_.front(), IMU_INTERP_STEPS);
-      stepPitch= linInterp(pastPitch, pitchQ_.front(), IMU_INTERP_STEPS);
-      for(int i= 0; i< IMU_INTERP_STEPS; i++)
-        sum_dz+= dz(dxQ_.front()/totalSteps, dyQ_.front()/totalSteps,
-                    pastRoll+i*stepRoll, pastPitch+i*stepPitch);  
+      sum_dz+= dz(dxQ_.front()/steps, dyQ_.front()/steps,
+                  pastRoll, pastPitch);
     }
     dxQ_.resize(FILTER_LENGTH);
     dyQ_.resize(FILTER_LENGTH);
@@ -259,6 +270,14 @@ namespace pandora_pose_estimation
     return sum_dz;
   }
 
+  /**
+   * @brief Weighs the expectation and the measurement and produces a linear
+   * combination, eliminating outliers from the measurements
+   */
+  double PoseEstimation::probFilt(double expectation, double measurement){
+    double p= exp(-abs(pow(measurement-expectation,1.72144))*PROBFILT_DECAY);
+    return p*measurement+(1-p)*expectation;
+  }
   /**
    * @brief Linearly interpolates between past--current vals
    * @returns Interpolation step

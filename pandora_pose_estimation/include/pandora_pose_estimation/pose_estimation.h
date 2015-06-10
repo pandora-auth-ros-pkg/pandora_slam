@@ -68,6 +68,7 @@ namespace pandora_pose_estimation
 
    private:
     double findDz(double dx, double dy);
+    double probFilt(double expectation, double measurement);
     double linInterp(double past, double current, int steps);
     double dz(double dx, double dy, double roll, double pitch);
 
@@ -96,8 +97,8 @@ namespace pandora_pose_estimation
 
     int currentState_;
 
-    double POSE_FREQ, FLAT_TO_AXES;
-    int FILTER_LENGTH, IMU_INTERP_STEPS;
+    double POSE_FREQ, FLAT_TO_AXES, PROBFILT_DECAY;
+    int FILTER_LENGTH;
 
     //DEBUG z
     ros::Publisher zTransPub_;
