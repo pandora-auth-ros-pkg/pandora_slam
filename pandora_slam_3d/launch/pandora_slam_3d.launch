@@ -1,24 +1,24 @@
 <launch>
 	<node pkg="octomap_server" type="octomap_server_node" name="octomap_server">
 		<param name="resolution" value="0.05" />
-		
+
 		<!-- fixed map frame (set to 'map' if SLAM or localization running!) -->
 		<param name="frame_id" type="string" value="map" />
-		
+
 		<!-- maximum range to integrate (speedup!) -->
-		<param name="sensor_model/max_range" value="5.0" />	
-		
+		<param name="sensor_model/max_range" value="5.0" />
+
 		<!-- data source to integrate (PointCloud2) -->
 
 		<remap from="cloud_in" to="/slam_3d/transformed_cloud" />
 	</node>
-	
+
 <!--Launch laser scan to point cloud converter-->
 	<include file="$(find pandora_slam_3d)/launch/laser_scan_to_point_cloud_converter.launch" />
-	
+
 <!--Launch pandora_icp_slam_3d node-->
 
 	<include file="$(find pandora_slam_3d)/launch/pandora_icp_slam_3d.launch" />
-	
-	
+
+
 </launch>
