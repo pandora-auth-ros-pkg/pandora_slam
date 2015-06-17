@@ -1,36 +1,31 @@
-<package>
+<package format="2">
   <name>pandora_slam_2d</name>
   <version>0.1.0</version>
   <description>pandora_slam</description>
-  <maintainer email="zalidis@gmail.com">Chris Zalidis</maintainer> 
-  
+  <maintainer email="zalidis@gmail.com">Chris Zalidis</maintainer>
+
   <license>BSD</license>
-  
+
   <url type="bugtracker">https://github.com/pandora-auth-ros-pkg/pandora_slam/issues</url>
   <url type="repository">https://github.com/pandora-auth-ros-pkg/pandora_slam</url>
-  
+
   <author>Manos Tsardoulias</author>
+
   <buildtool_depend>catkin</buildtool_depend>
-  
-  <build_depend>roscpp</build_depend> 
-  <build_depend>tf</build_depend> 
-  <build_depend>state_manager</build_depend> 
-  <build_depend>state_manager_msgs</build_depend> 
-  <build_depend>diagnostic_updater</build_depend> 
-  <build_depend version_gte="1.0.3">crsm_slam</build_depend> 
-  <build_depend>roslint</build_depend> 
-  
-  <run_depend>roscpp</run_depend> 
-  <run_depend>tf</run_depend> 
-  <run_depend>state_manager</run_depend>
-  <run_depend>state_manager_msgs</run_depend>
-  <run_depend>diagnostic_updater</run_depend>
-  <run_depend version_gte="1.0.3">crsm_slam</run_depend> 
-  <run_depend>hokuyo_node</run_depend>
-  <run_depend>urg_node</run_depend>
-  <run_depend>rplidar_ros</run_depend> 
-  <run_depend>roslint</run_depend> 
-  
+
+  <build_depend>roslint</build_depend>
+
+  <depend>roscpp</depend>
+  <depend>tf</depend>
+  <depend>state_manager</depend>
+  <depend>state_manager_msgs</depend>
+  <depend>diagnostic_updater</depend>
+  <depend>crsm_slam</depend>
+
+  <exec_depend>hokuyo_node</exec_depend>
+  <exec_depend>rplidar_ros</exec_depend>
+  <exec_depend>urg_node</exec_depend>
+
   <export>
   </export>
 </package>
