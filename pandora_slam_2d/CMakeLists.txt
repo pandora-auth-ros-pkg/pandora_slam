@@ -7,6 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   state_manager
   diagnostic_updater
+  state_manager
   state_manager_msgs
   crsm_slam
   roslint
