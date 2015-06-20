@@ -1,4 +1,6 @@
 <launch>
+  <!-- Launch urg_node for the hokuyo UST-20LX laser scanner -->
+  <!-- The node posts LaserScan msgs on the topic /scan -->
   <node name="hokuyo_laser" pkg="urg_node" type="urg_node" respawn="false">
     <param name="frame_id" type="string" value="laser_link"/>
     <param name="ip_address" type="string" value="192.168.2.10"/>
@@ -9,7 +11,14 @@
     <param name="skip" type="int" value="3"/>
     <param name="cluster" type="int" value="2"/>
     <param name="publish_intensity" type="bool" value="false"/>
+  </node>
 
-    <remap from="scan" to="laser/scan"/>
+  <!-- Use the laser_filters node to filter out edge veiling effects -->
+  <!-- The node listens to /scan and publishes to /laser/scan -->
+  <node name="laser_filters" pkg="laser_filters" type="scan_to_scan_filter_chain">
+    <rosparam
+      command="load"
+      file="$(find pandora_slam_2d)/config/laser_filters/hokuyo_ust_20lx_filters.yaml"/>
+    <remap from="scan_filtered" to="laser/scan"/>
   </node>
 </launch>
