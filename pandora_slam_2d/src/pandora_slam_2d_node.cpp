@@ -39,11 +39,9 @@
 
 
 //!< Main function of the node
-int main (int argc, char **argv)
+int main(int argc, char **argv)
 {
-  ros::init(argc, argv, 
-            "pandora_slam_2d_node", 
-            ros::init_options::NoSigintHandler);
+  ros::init(argc, argv, "pandora_slam_2d_node", ros::init_options::NoSigintHandler);
   pandora_slam_2d::PandoraSlam slam(argc, argv);
   ROS_DEBUG("Pandora Slam node initialised");
   ros::spin();

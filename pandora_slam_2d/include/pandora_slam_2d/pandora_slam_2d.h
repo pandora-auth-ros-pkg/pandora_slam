@@ -51,7 +51,6 @@ namespace pandora_slam_2d
 class PandoraSlam : public StateClient
 {
  private:
-
   int state_;
   int prevState_;
 
@@ -78,11 +77,8 @@ class PandoraSlam : public StateClient
   @return void
   **/
   void completeTransition(void);
-
 };
 
-} // namespace pandora_slam_2d
-
+}  // namespace pandora_slam_2d
 
 #endif  // PANDORA_SLAM_2D_PANDORA_SLAM_2D_H
-
