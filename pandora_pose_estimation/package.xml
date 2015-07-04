@@ -20,6 +20,7 @@
   <depend>std_msgs</depend>
   <depend>roslint</depend>
   <depend>state_manager</depend>
+  <depend>state_manager_msgs</depend>
 
   <export>
   </export>
