@@ -5,7 +5,7 @@ robot_trajectory_publish_topic : /robot_trajectory
 trajectory_publisher_frame_id : map
 laser_subscriber_topic : /laser/scan
 
-#~ Tf frames 
+#~ Tf frames
 
 world_frame : world
 base_footprint_frame : base_footprint
@@ -33,7 +33,7 @@ occupancy_grid_map_freq : 1.0
 robot_pose_tf_freq : 6.0
 trajectory_freq : 1.0
 
-#~ Robot parameters: Woody
+#~ Robot parameters: Gio
 
 robot_width : 0.41
 robot_length : 0.53
