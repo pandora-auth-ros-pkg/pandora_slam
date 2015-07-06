@@ -56,7 +56,7 @@
 
 namespace pandora_pose_estimation
 {
-  class PoseEstimation: public StateClient
+  class PoseEstimation: public state_manager::StateClient
   {
    public:
     PoseEstimation(const std::string& ns);

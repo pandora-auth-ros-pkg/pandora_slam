@@ -48,7 +48,7 @@ namespace pandora_slam_2d
  @class Slam
  @brief The main slam class. Contains the main functionalities of slam.
  **/
-class PandoraSlam : public StateClient
+class PandoraSlam : public state_manager::StateClient
 {
  private:
   int state_;
