@@ -1,6 +1,6 @@
 #!/bin/bash 
 
-ping -q -c1 10.1.1.3 > /dev/null
+ping -q -c1 192.168.2.10 > /dev/null
 ping_ret=$?
 
 if [ -a /dev/rplidar ]; then
