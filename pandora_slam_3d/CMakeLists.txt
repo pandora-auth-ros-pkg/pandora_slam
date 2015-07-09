@@ -9,8 +9,6 @@ find_package(catkin REQUIRED COMPONENTS
   octomap_server
   )
 
-set(CMAKE_BUILD_TYPE Debug)
-
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES pandora_3d_slam
@@ -24,85 +22,85 @@ include_directories(
 )
 
 #~ laser_scan_to_point_cloud_converter
-add_library(${PROJECT_NAME}_laser_scan_to_point_cloud_converter 
+add_library(${PROJECT_NAME}_laser_scan_to_point_cloud_converter
             src/laser_scan_to_point_cloud_converter/laser_scan_to_point_cloud_converter.cpp
             )
-target_link_libraries(${PROJECT_NAME}_laser_scan_to_point_cloud_converter 
+target_link_libraries(${PROJECT_NAME}_laser_scan_to_point_cloud_converter
 					  ${catkin_LIBRARIES}
 					  )
 
 
-add_executable(${PROJECT_NAME}_laser_scan_to_point_cloud_converter_node 
+add_executable(${PROJECT_NAME}_laser_scan_to_point_cloud_converter_node
 			   src/laser_scan_to_point_cloud_converter/laser_scan_to_point_cloud_converter_node.cpp
 			   )
-target_link_libraries(${PROJECT_NAME}_laser_scan_to_point_cloud_converter_node 
+target_link_libraries(${PROJECT_NAME}_laser_scan_to_point_cloud_converter_node
 					  ${PROJECT_NAME}_laser_scan_to_point_cloud_converter
-					  ${catkin_LIBRARIES} 
+					  ${catkin_LIBRARIES}
 					  )
 
-#pandora_icp_slam_3d_laser 
-#~ add_library(${PROJECT_NAME}_pandora_icp_slam_3d 
+#pandora_icp_slam_3d_laser
+#~ add_library(${PROJECT_NAME}_pandora_icp_slam_3d
 			#~ src/pandora_icp_slam_3d_laser/pandora_icp_slam_3d_laser.cpp
 			#~ )
-#~ target_link_libraries(${PROJECT_NAME}_pandora_icp_slam_3d 
+#~ target_link_libraries(${PROJECT_NAME}_pandora_icp_slam_3d
                       #~ ${catkin_LIBRARIES}
                       #~ )
-#~ 
-#~ add_executable(${PROJECT_NAME}_pandora_icp_slam_3d_node 
+#~
+#~ add_executable(${PROJECT_NAME}_pandora_icp_slam_3d_node
 			   #~ src/pandora_icp_slam_3d_laser/pandora_icp_slam_3d_laser_node.cpp
 			   #~ )
-#~ target_link_libraries(${PROJECT_NAME}_pandora_icp_slam_3d_node 
+#~ target_link_libraries(${PROJECT_NAME}_pandora_icp_slam_3d_node
 					  #~ ${PROJECT_NAME}_pandora_icp_slam_3d
-					  #~ ${catkin_LIBRARIES} 
+					  #~ ${catkin_LIBRARIES}
 					  #~ )
-					  
-					  
-#pandora_icp_slam_3d_laser_map 
-#~ add_library(${PROJECT_NAME}_pandora_icp_slam_3d 
+
+
+#pandora_icp_slam_3d_laser_map
+#~ add_library(${PROJECT_NAME}_pandora_icp_slam_3d
 			#~ src/pandora_icp_slam_3d_laser_map/pandora_icp_slam_3d_laser_map.cpp
 			#~ )
-#~ target_link_libraries(${PROJECT_NAME}_pandora_icp_slam_3d 
+#~ target_link_libraries(${PROJECT_NAME}_pandora_icp_slam_3d
                       #~ ${catkin_LIBRARIES}
                       #~ )
-#~ 
-#~ add_executable(${PROJECT_NAME}_pandora_icp_slam_3d_node 
+#~
+#~ add_executable(${PROJECT_NAME}_pandora_icp_slam_3d_node
 			   #~ src/pandora_icp_slam_3d_laser_map/pandora_icp_slam_3d_laser_map_node.cpp
 			   #~ )
-#~ target_link_libraries(${PROJECT_NAME}_pandora_icp_slam_3d_node 
+#~ target_link_libraries(${PROJECT_NAME}_pandora_icp_slam_3d_node
 					  #~ ${PROJECT_NAME}_pandora_icp_slam_3d
-					  #~ ${catkin_LIBRARIES} 
+					  #~ ${catkin_LIBRARIES}
 					  #~ )
-					  
-					  
-#pandora_icp_slam_3d_kinect 
-#~ add_library(${PROJECT_NAME}_pandora_icp_slam_3d 
+
+
+#pandora_icp_slam_3d_kinect
+#~ add_library(${PROJECT_NAME}_pandora_icp_slam_3d
 			#~ src/pandora_icp_slam_3d_kinect/pandora_icp_slam_3d_kinect.cpp
 			#~ )
-#~ target_link_libraries(${PROJECT_NAME}_pandora_icp_slam_3d 
+#~ target_link_libraries(${PROJECT_NAME}_pandora_icp_slam_3d
                       #~ ${catkin_LIBRARIES}
                       #~ )
-#~ 
-#~ add_executable(${PROJECT_NAME}_pandora_icp_slam_3d_node 
+#~
+#~ add_executable(${PROJECT_NAME}_pandora_icp_slam_3d_node
 			   #~ src/pandora_icp_slam_3d_kinect/pandora_icp_slam_3d_kinect_node.cpp
 			   #~ )
-#~ target_link_libraries(${PROJECT_NAME}_pandora_icp_slam_3d_node 
+#~ target_link_libraries(${PROJECT_NAME}_pandora_icp_slam_3d_node
 					  #~ ${PROJECT_NAME}_pandora_icp_slam_3d
-					  #~ ${catkin_LIBRARIES} 
+					  #~ ${catkin_LIBRARIES}
 					  #~ )
-					  
-					  
-#pandora_icp_slam_3d_kinect_map 
-add_library(${PROJECT_NAME}_pandora_icp_slam_3d 
+
+
+#pandora_icp_slam_3d_kinect_map
+add_library(${PROJECT_NAME}_pandora_icp_slam_3d
 			src/pandora_icp_slam_3d_kinect_map/pandora_icp_slam_3d_kinect_map.cpp
 			)
-target_link_libraries(${PROJECT_NAME}_pandora_icp_slam_3d 
+target_link_libraries(${PROJECT_NAME}_pandora_icp_slam_3d
                       ${catkin_LIBRARIES}
                       )
 
-add_executable(${PROJECT_NAME}_pandora_icp_slam_3d_node 
+add_executable(${PROJECT_NAME}_pandora_icp_slam_3d_node
 			   src/pandora_icp_slam_3d_kinect_map/pandora_icp_slam_3d_kinect_map_node.cpp
 			   )
-target_link_libraries(${PROJECT_NAME}_pandora_icp_slam_3d_node 
+target_link_libraries(${PROJECT_NAME}_pandora_icp_slam_3d_node
 					  ${PROJECT_NAME}_pandora_icp_slam_3d
-					  ${catkin_LIBRARIES} 
+					  ${catkin_LIBRARIES}
 					  )
