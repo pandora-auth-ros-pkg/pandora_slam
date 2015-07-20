@@ -62,10 +62,10 @@ void PandoraSlam::startTransition(int newState)
     exit(0);
   }
 
-  bool currStateOn = (state_ !=
-                        state_manager_msgs::RobotModeMsg::MODE_OFF);
-  bool prevStateOn = (prevState_ !=
-                        state_manager_msgs::RobotModeMsg::MODE_OFF);
+  bool currStateOn = (state_ != state_manager_msgs::RobotModeMsg::MODE_OFF &&
+                      state_ != state_manager_msgs::RobotModeMsg::MODE_SENSOR_TEST);
+  bool prevStateOn = (prevState_ != state_manager_msgs::RobotModeMsg::MODE_OFF &&
+                      prevState_ != state_manager_msgs::RobotModeMsg::MODE_SENSOR_TEST);
 
   if (currStateOn && !prevStateOn)
   {

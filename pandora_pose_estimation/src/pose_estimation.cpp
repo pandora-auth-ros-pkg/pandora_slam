@@ -133,7 +133,8 @@ namespace pandora_pose_estimation
     rotationZero.setRPY(0, 0, 0);
 
     // Get frame flat
-    if (currentState_ != state_manager_msgs::RobotModeMsg::MODE_OFF) {
+    if (currentState_ != state_manager_msgs::RobotModeMsg::MODE_OFF &&
+        currentState_ != state_manager_msgs::RobotModeMsg::MODE_SENSOR_TEST) {
       tf::StampedTransform intermediateTf;
       std::string tfError;
       poseListener_.waitForTransform(frameFootprint_, frameMap_,
