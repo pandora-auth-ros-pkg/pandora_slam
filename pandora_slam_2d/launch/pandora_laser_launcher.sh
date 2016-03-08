@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 
 ping -q -c1 192.168.2.10 > /dev/null
 ping_ret=$?
@@ -6,7 +6,7 @@ ping_ret=$?
 if [ -a /dev/rplidar ]; then
   echo "Launching Rplidar node..."
   roslaunch pandora_slam_2d pandora_rplidar.launch
-elif [ -a /dev/hokuyo ]; then
+elif [ -a /dev/hokuyo_04 ]; then
   echo "Launching hokuyo_node for URG-04LX"
   roslaunch pandora_slam_2d pandora_hokuyo_04lx.launch
 elif [[ $ping_ret -eq 0 ]]; then
