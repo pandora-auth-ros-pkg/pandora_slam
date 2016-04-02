@@ -1,4 +1,0 @@
-<launch>
-  <include file="$(find state_manager)/launch/stateManager.launch" />
-  <include file="$(find pandora_pose_estimation)/launch/pose_estimation_5_dof.launch" />
-</launch>
