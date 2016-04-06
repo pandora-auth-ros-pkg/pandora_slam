@@ -5,6 +5,8 @@
   <include file="$(find state_manager)/launch/stateManager.launch" />
   <include file="$(find pandora_robots_description)/$(arg robot)/launch/$(arg robot)_description.launch" />
 
-  <include file="$(find pandora_slam_2d)/launch/pandora_slam_2d_real.launch" />
+  <include file="$(find pandora_slam_2d)/launch/pandora_slam_2d_real.launch">
+    <arg name="robot" value="$(arg robot)" />
+  </include>
 
 </launch>

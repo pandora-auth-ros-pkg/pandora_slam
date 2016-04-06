@@ -1,9 +1,14 @@
 <launch>
-  <node 
+  <arg name="robot" default="gio" />
+
+  <node
     name="pandora_laser_launcher"
     pkg="pandora_slam_2d"
     type="pandora_laser_launcher.sh"
     output="screen" />
 
-  <include file="$(find pandora_slam_2d)/launch/pandora_slam_2d.launch" />
+  <include file="$(find pandora_slam_2d)/launch/pandora_slam_2d.launch">
+    <arg name="robot" value="$(arg robot)" />
+  </include>
+
 </launch>
